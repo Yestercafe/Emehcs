@@ -1,11 +1,11 @@
 module Main where
+
 import Control.Monad
-import Control.Monad.Error
 import System.Environment
-import Numeric (readOct, readHex)
+import Control.Monad.Error
 import Text.ParserCombinators.Parsec hiding (spaces)
 
-main :: IO()
+main :: IO ()
 main = do
     args <- getArgs
     evaled <- return $ liftM show $ readExpr (args !! 0) >>= eval
@@ -28,25 +28,12 @@ data LispVal = Atom String
              | Number Integer
              | String String
              | Bool Bool
-             | Char Char
-
-parseChar :: Parser LispVal
-parseChar = do char '\''
-               c <- noneOf "'"
-               char '\''
-               return $ Char c
 
 parseString :: Parser LispVal
 parseString = do char '"'
-                 x <- many chars
+                 x <- many (noneOf "\"")
                  char '"'
                  return $ String x
-                 where chars = escaped <|> noneOf "\""
-                       escaped = char '\\' >> choice (zipWith escapedChar codes replacements)
-                       escapedChar :: Char -> Char -> Parser Char
-                       escapedChar code replacement = char code >> return replacement
-                       codes        = ['b',  'n',  'f',  'r',  't',  '\\', '\"', '/']
-                       replacements = ['\b', '\n', '\f', '\r', '\t', '\\', '\"', '/']
 
 parseAtom :: Parser LispVal
 parseAtom = do first <- letter <|> symbol
@@ -57,26 +44,8 @@ parseAtom = do first <- letter <|> symbol
                           "#f" -> Bool False
                           otherwise -> Atom atom
 
-parseDec :: Parser LispVal
-parseDec = do n <- many1 digit
-              return (Number (read n))
-
-parseOct :: Parser LispVal
-parseOct = do char '#'
-              char 'o'
-              rest <- many1 octDigit
-              return (Number (fst (readOct rest !! 0)))
-
-parseHex :: Parser LispVal
-parseHex = do char '#'
-              char 'x'
-              rest <- many1 hexDigit
-              return (Number (fst (readHex rest !! 0)))
-
 parseNumber :: Parser LispVal
-parseNumber = parseDec
-          <|> try parseOct
-          <|> try parseHex
+parseNumber = liftM (Number . read) $ many1 digit
 
 parseList :: Parser LispVal
 parseList = liftM List $ sepBy parseExpr spaces
@@ -94,10 +63,9 @@ parseQuoted = do
     return $ List [Atom "quote", x]
 
 parseExpr :: Parser LispVal
-parseExpr = try parseChar
-        <|> parseNumber
+parseExpr = parseAtom
         <|> parseString
-        <|> parseAtom
+        <|> parseNumber
         <|> parseQuoted
         <|> do char '('
                x <- (try parseList) <|> parseDottedList
@@ -124,7 +92,7 @@ eval val@(Number _) = return val
 eval val@(Bool _) = return val
 eval (List [Atom "quote", val]) = return val
 eval (List (Atom func : args)) = mapM eval args >>= apply func
-eval badForm = throwError $ BadSpecialForm "unrecognized special form" badForm
+eval badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 apply :: String -> [LispVal] -> ThrowsError LispVal
 apply func args = maybe (throwError $ NotFunction "Unrecognized primitive function args" func)
@@ -147,11 +115,11 @@ numericBinop op params = mapM unpackNum params >>= return . Number . foldl1 op
 unpackNum :: LispVal -> ThrowsError Integer
 unpackNum (Number n) = return n
 unpackNum (String n) = let parsed = reads n in
-                           if null parsed
-                              then throwError $ TypeMismatch "number" $ String n
-                              else return $ fst $ parsed !! 0
+                          if null parsed
+                            then throwError $ TypeMismatch "number" $ String n
+                            else return $ fst $ parsed !! 0
 unpackNum (List [n]) = unpackNum n
-unpackNum notNum =  throwError $ TypeMismatch "number" notNum
+unpackNum notNum = throwError $ TypeMismatch "number" notNum
 
 data LispError = NumArgs Integer [LispVal]
                | TypeMismatch String LispVal
@@ -165,8 +133,10 @@ showError :: LispError -> String
 showError (UnboundVar message varname) = message ++ ": " ++ varname
 showError (BadSpecialForm message form) = message ++ ": " ++ show form
 showError (NotFunction message func) = message ++ ": " ++ show func
-showError (NumArgs expected found) = "Expected " ++ show expected ++ " args: found values " ++ unwordsList found
-showError (TypeMismatch expected found) = "Invalid type: expected " ++ expected ++ ", found " ++ show found
+showError (NumArgs expected found) = "Expected " ++ show expected
+                                  ++ " args: found values " ++ unwordsList found
+showError (TypeMismatch expected found) = "Invalid type: expected " ++ expected
+                                       ++ ", found " ++ show found
 showError (Parser parseErr) = "Parse error at " ++ show parseErr
 
 instance Show LispError where show = showError

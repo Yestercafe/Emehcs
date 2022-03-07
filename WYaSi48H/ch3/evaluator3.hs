@@ -8,7 +8,7 @@ main :: IO()
 main = getArgs >>= putStrLn . show . eval . readExpr . (!! 0)
 
 symbol :: Parser Char
-symbol = oneOf "!$%&|*+-/:<=?>@^_~"
+symbol = oneOf "!$%&|*+-/:<=?>@^_~#"
 
 readExpr :: String -> LispVal
 readExpr input = case parse parseExpr "lisp" input of
