@@ -39,6 +39,9 @@ void print_value(std::ostream& os, const Value& value) {
         case LispValType::Number:
             os << "Number";
             break;
+        case LispValType::Char:
+            os << "Char";
+            break;
         case LispValType::String:
             os << "String";
             break;
@@ -65,6 +68,9 @@ void print_value(std::ostream& os, const Value& value) {
             break;
         case LispValType::Number:
             os << value.get<lv::Number>();
+            break;
+        case LispValType::Char:
+            os << "'" << value.get<lv::Char>() << "'";
             break;
         case LispValType::String:
             os << '"' << value.get<lv::String>() << '"';

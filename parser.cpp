@@ -1,6 +1,7 @@
 #include <parser.hpp>
 #include <cctype>
 #include <sstream>
+#include <debug.hpp>
 
 namespace emehcs {
 
@@ -21,8 +22,8 @@ void skipSpaces(const ::std::string_view& s, size_t& cursor) {
  *
  * @param s
  * @param cursor
- * @return parseChar       // TODO
-       <|> parseNumber
+ * @return parseNumber
+       <|> parseChar
        <|> parseString
        <|> parseAtom
  */
@@ -33,6 +34,7 @@ ParserReturns parseExpr(const ::std::string_view& s, size_t& cursor) {
 
     bool _ {
           (pr = parseNumber(s, cursor)).succ
+       || (pr = parseChar(s, cursor)).succ
        || (pr = parseString(s, cursor)).succ
        || (pr = parseAtom(s, cursor)).succ
     };
@@ -104,6 +106,54 @@ ParserReturns parseAtom(const ::std::string_view& s, size_t& cursor) {
  *
  * @param s
  * @param cursor
+ * @return do char '\''
+              c <- noneOf "'"
+              char '\''
+              return $ Char c
+ */
+ParserReturns parseChar(const ::std::string_view& s, size_t& cursor) {
+    using ::std::stringstream;
+
+    const auto len {s.length()};
+
+    char quote {};
+    if (cursor >= len) {
+        return {};
+    }
+    quote = s[cursor++];
+    if (quote != '\'') {
+        --cursor;
+        return {};
+    }
+
+    if (cursor >= len) {
+        --cursor;
+        return {};
+    }
+    char ch {};
+    ch = s[cursor++];
+    if (ch == '\'') {
+        cursor -= 2;
+        return {};
+    }
+
+    if (cursor >= len) {
+        cursor -= 2;
+        return {};
+    }
+    quote = s[cursor++];
+    if (quote != '\'') {
+        cursor -= 3;
+        return {};
+    }
+
+    return {true, make_shared_value(ch), LispValType::Char};
+}
+
+/**
+ *
+ * @param s
+ * @param cursor
  * @return do char '"'
               x <- many (noneOf "\"")
               char '"'
@@ -112,7 +162,7 @@ ParserReturns parseAtom(const ::std::string_view& s, size_t& cursor) {
 ParserReturns parseString(const ::std::string_view& s, size_t& cursor) {
     using ::std::stringstream;
 
-    const auto len = s.length();
+    const auto len {s.length()};
 
     // char '"'
     char quote {};
@@ -134,7 +184,19 @@ ParserReturns parseString(const ::std::string_view& s, size_t& cursor) {
             --cursor;
             break;
         }
-        x << ch;
+        else if (ch == '\\') {              // escaped char
+            char escaped = s[cursor++];
+            auto fnd = EscapedMap.cbegin();
+            if ((fnd = EscapedMap.find(escaped)) != EscapedMap.cend()) {
+                x << fnd->second;
+            }                 // not a correct escaped char
+            else {
+                x << '\\' << escaped;
+            }
+        }
+        else {
+            x << ch;
+        }
     }
 
     // char <- '"'

@@ -25,6 +25,7 @@ struct ParserReturns {
 void skipSpaces(const ::std::string_view& s, size_t& cursor);
 ParserReturns parseExpr(const ::std::string_view& s, size_t& cursor);
 ParserReturns parseAtom(const ::std::string_view& s, size_t& cursor);
+ParserReturns parseChar(const ::std::string_view& s, size_t& cursor);
 ParserReturns parseString(const ::std::string_view& s, size_t& cursor);
 ParserReturns parseNumber(const ::std::string_view& s, size_t& cursor);
 ParserReturns parseDec(const ::std::string_view& s, size_t& cursor);

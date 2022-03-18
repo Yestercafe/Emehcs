@@ -17,6 +17,7 @@ enum LispValType {
     List,
     DottedList,
     Number,
+    Char,
     String,
     Bool,
     Function,
@@ -36,6 +37,7 @@ struct Atom {
 using List         = ::std::deque<::std::shared_ptr<Value>>;
 using DottedList   = ::std::pair<::std::shared_ptr<Value>, ::std::shared_ptr<Value>>;
 using Number       = ::std::int64_t;
+using Char         = char;
 using String       = ::std::string;
 using Bool         = bool;
 using Function     = void*;         // TODO
@@ -49,6 +51,7 @@ class Value {
                          , lv::List
                          , lv::DottedList
                          , lv::Number
+                         , lv::Char
                          , lv::String
                          , lv::Bool
                          , lv::Function

@@ -4,6 +4,7 @@
 #include <preload.hpp>
 #include <string_view>
 #include <cctype>
+#include <unordered_map>
 
 namespace emehcs {
 
@@ -22,6 +23,17 @@ constexpr bool isodigit(char c) {
 constexpr bool isxdigit(char c) {
     return ::std::isxdigit(c);
 }
+
+const ::std::unordered_map<char, char> EscapedMap {
+        {'b', '\b'},
+        {'n', '\n'},
+        {'f', '\f'},
+        {'r', '\r'},
+        {'t', '\t'},
+        {'\\', '\\'},
+        {'\"', '\"'},
+        {'\'', '\''},
+};
 
 }
 
