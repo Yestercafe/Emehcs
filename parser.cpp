@@ -116,6 +116,7 @@ ParserReturns parseChar(const ::std::string_view& s, size_t& cursor) {
 
     const auto len {s.length()};
 
+    // char '\''
     char quote {};
     if (cursor >= len) {
         return {};
@@ -126,6 +127,7 @@ ParserReturns parseChar(const ::std::string_view& s, size_t& cursor) {
         return {};
     }
 
+    // c <- noneOf "'"
     if (cursor >= len) {
         --cursor;
         return {};
@@ -135,6 +137,20 @@ ParserReturns parseChar(const ::std::string_view& s, size_t& cursor) {
     if (ch == '\'') {
         cursor -= 2;
         return {};
+    }
+    else if (ch == '\\') {              // escaped char
+        char escaped = s[cursor++];
+        auto fnd = EscapedMap.cbegin();
+        if ((fnd = EscapedMap.find(escaped)) != EscapedMap.cend()) {
+            ch = fnd->second;
+        }                 // not a correct escaped char
+        else {
+            // TODO throws exception
+            ::std::cerr << "Escaped char error" << ::std::endl;
+            cursor -= 3;
+            LOG(::std::cerr, "cursor=", cursor);
+            return {};
+        }
     }
 
     if (cursor >= len) {
