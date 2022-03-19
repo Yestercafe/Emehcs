@@ -5,6 +5,7 @@
 #include <string_view>
 #include <cctype>
 #include <unordered_map>
+#include <value.hpp>
 
 namespace emehcs {
 
@@ -34,6 +35,34 @@ const ::std::unordered_map<char, char> EscapedMap {
         {'\"', '\"'},
         {'\'', '\''},
 };
+
+ValueSharedPtr numericUnopMinus(ValueSharedPtr a);
+ValueSharedPtr numericBinopPlus(ValueSharedPtr a, ValueSharedPtr b);
+ValueSharedPtr numericBinopMinus(ValueSharedPtr a, ValueSharedPtr b);
+ValueSharedPtr numericBinopTimes(ValueSharedPtr a, ValueSharedPtr b);
+ValueSharedPtr numericBinopDivide(ValueSharedPtr a, ValueSharedPtr b);
+ValueSharedPtr numericBinopMod(ValueSharedPtr a, ValueSharedPtr b);
+ValueSharedPtr numericBinopQuot(ValueSharedPtr a, ValueSharedPtr b);
+ValueSharedPtr numericBinopRem(ValueSharedPtr a, ValueSharedPtr b);
+
+const ::std::unordered_map<std::string, ::std::function<ValueSharedPtr(ValueSharedPtr)>> UnaryOps {
+        {"-", numericUnopMinus},
+};
+
+const ::std::unordered_map<std::string, ::std::function<ValueSharedPtr(ValueSharedPtr, ValueSharedPtr)>> BinaryOps {
+        {"+", numericBinopPlus},
+        {"-", numericBinopMinus},
+        {"*", numericBinopTimes},
+        {"/", numericBinopDivide},
+        {"mod", numericBinopMod},
+        {"quotient", numericBinopQuot},
+        {"remainder", numericBinopRem},
+};
+
+template <typename T>
+T abs(T a) {
+    return a < 0 ? -a : a;
+}
 
 }
 

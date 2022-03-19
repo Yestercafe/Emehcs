@@ -1,15 +1,9 @@
 #include <parser.hpp>
 #include <cctype>
 #include <sstream>
-#include <debug.hpp>
 #include <memory>
 
 namespace emehcs {
-
-template<typename T>
-auto make_shared_value(const T& t) {
-    return ::std::make_shared<Value>(t);
-}
 
 bool skipSpaces(const ::std::string_view& s, size_t& cursor) {
     const auto len {s.length()};
@@ -152,7 +146,6 @@ ParserReturns parseChar(const ::std::string_view& s, size_t& cursor) {
             // TODO throws exception
             ::std::cerr << "Escaped char error" << ::std::endl;
             cursor -= 3;
-            LOG(::std::cerr, "cursor=", cursor);
             return {};
         }
     }

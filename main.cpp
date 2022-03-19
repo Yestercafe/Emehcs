@@ -1,6 +1,7 @@
 #include <preload.hpp>
 #include <value.hpp>
 #include <parser.hpp>
+#include <eval.hpp>
 #include <string>
 
 void test1() {
@@ -27,8 +28,14 @@ int main()
     while (::std::getline(::std::cin, line)) {
         size_t cursor {0u};
         auto ret = emehcs::parseExpr(line, cursor);
-        if (ret.succ)
-            ::std::cout << *ret.value_ptr << ::std::endl;
+        if (ret.succ) {
+            auto result = ::emehcs::eval(ret.value_ptr);
+            ::std::cout << *result << ::std::endl;
+        }
+        else {
+            ::std::cout << "parse failed" << ::std::endl;
+        }
+
     }
 
     return 0;

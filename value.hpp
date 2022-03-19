@@ -26,10 +26,10 @@ enum LispValType {
 namespace lv {
 
 struct Atom {
-    ::std::string name;
+    ::std::string str;
     Atom() = default;
-    Atom(const ::std::string& name)
-        : name{name}
+    Atom(const ::std::string& str)
+        : str{str}
     { }
     Atom(const Atom&) = default;
     Atom(Atom&&) = default;
@@ -92,6 +92,8 @@ class Value {
 void print_value(std::ostream& os, const emehcs::lv::List& list, bool should_prompt_type);
 void print_value(std::ostream& os, const emehcs::lv::DottedList& dotted_list, bool should_prompt_type);
 void print_value(std::ostream& os, const emehcs::Value& value, bool should_prompt_type);
+
+ValueSharedPtr unpackNum(ValueSharedPtr value_ptr);
 
 }
 

@@ -1,5 +1,6 @@
 #include <value.hpp>
 #include <exception>
+#include <eval.hpp>
 
 namespace emehcs {
 
@@ -60,7 +61,7 @@ void print_value(std::ostream& os, const Value& value, bool should_prompt_type =
 
     switch (type) {
         case LispValType::Atom:
-            os << value.get<lv::Atom>().name;
+            os << value.get<lv::Atom>().str;
             break;
         case LispValType::List:
             print_value(os, value.get<lv::List>(), should_prompt_type);
@@ -86,6 +87,20 @@ void print_value(std::ostream& os, const Value& value, bool should_prompt_type =
         default:
             std::terminate();
     }
+}
+
+ValueSharedPtr unpackNum(ValueSharedPtr value_ptr) {
+    switch (value_ptr->get_type()) {
+        case LispValType::Number:
+            return value_ptr;
+        case LispValType::String:
+            return make_shared_value(::std::stoll(value_ptr->get<lv::String>()));
+        case LispValType::List:
+            return eval(value_ptr);
+        default:
+            break;
+    }
+    return 0;
 }
 
 }
