@@ -3,8 +3,6 @@
 
 #include <iostream>
 
-namespace emehcs {
-
 #ifndef __EMEHCS_DEBUG
 #define LOG()
 #else
@@ -19,6 +17,7 @@ void LOG(::std::ostream& os, const Arg& arg, const Args& ...args) {
 }
 #endif
 
-}
+#define LOG_STDOUT(...) LOG(::std::cout, __VA_ARGS__)
+#define LOG_STDERR(...) LOG(::std::cerr, __VA_ARGS__)
 
 #endif //EMECHS_DEBUG_HPP

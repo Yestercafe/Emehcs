@@ -2,6 +2,7 @@
 #include <cctype>
 #include <sstream>
 #include <debug.hpp>
+#include <memory>
 
 namespace emehcs {
 
@@ -10,12 +11,15 @@ auto make_shared_value(const T& t) {
     return ::std::make_shared<Value>(t);
 }
 
-void skipSpaces(const ::std::string_view& s, size_t& cursor) {
+bool skipSpaces(const ::std::string_view& s, size_t& cursor) {
     const auto len {s.length()};
+    const auto origin_cursor {cursor};
 
     while (cursor < len && ::std::isspace(s[cursor])) {
         ++cursor;
     }
+
+    return origin_cursor != cursor;
 }
 
 /**
@@ -28,15 +32,15 @@ void skipSpaces(const ::std::string_view& s, size_t& cursor) {
        <|> parseAtom
  */
 ParserReturns parseExpr(const ::std::string_view& s, size_t& cursor) {
-    skipSpaces(s, cursor);
-
     ParserReturns pr;
 
     bool _ {
-          (pr = parseNumber(s, cursor)).succ
-       || (pr = parseChar(s, cursor)).succ
-       || (pr = parseString(s, cursor)).succ
-       || (pr = parseAtom(s, cursor)).succ
+            (pr = parseNumber(s, cursor)).succ
+         || (pr = parseChar(s, cursor)).succ
+         || (pr = parseString(s, cursor)).succ
+         || (pr = parseAtom(s, cursor)).succ
+         || (pr = parseQuoted(s, cursor)).succ
+         || (pr = parseAnyList(s, cursor)).succ
     };
 
     return pr;
@@ -348,6 +352,143 @@ ParserReturns parseOct(const ::std::string_view& s, size_t& cursor) {
  */
 ParserReturns parseHex(const ::std::string_view& s, size_t& cursor) {
     return parseHexAux(s, cursor, 'x', isxdigit);
+}
+
+/**
+ *
+ * @param s
+ * @param cursor
+ * @return
+ */
+ParserReturns parseAnyList(const ::std::string_view& s, size_t& cursor) {
+    ParserReturns pr {};
+    const auto origin_cursor = cursor;
+
+    if (s[cursor] == '(') {
+        ++cursor;
+        bool _ {
+                (pr = parseList(s, cursor)).succ
+             || (pr = parseDottedList(s, cursor)).succ
+        };
+        if (s[cursor] != ')') {
+            pr = {};
+            cursor = origin_cursor;
+        }
+        else {
+            ++cursor;
+        }
+    }
+
+    return pr;
+}
+
+/**
+ *
+ * @param s
+ * @param cursor
+ * @return liftM List $ sepBy parseExpr spaces
+ */
+ParserReturns parseList(const ::std::string_view& s, size_t& cursor) {
+    const auto origin_cursor {cursor};
+    lv::List list;
+    while (true) {
+        auto ret = parseExpr(s, cursor);
+        if (!ret.succ) break;
+        list.push_back(ret.value_ptr);
+        bool hasSpaces = skipSpaces(s, cursor);
+        if (!hasSpaces) {
+            break;
+        }
+    }
+
+    if (list.size() < 2) {
+        cursor = origin_cursor;
+        return {};
+    }
+
+    return {true, make_shared_value(list), LispValType::List};
+}
+
+/**
+ *
+ * @param s
+ * @param cursor
+ * @return do
+    head <- endBy parseExpr spaces
+    tail <- char '.' >> spaces >> parseExpr
+    return $ DottedList head tail
+ */
+ParserReturns parseDottedList(const ::std::string_view& s, size_t& cursor) {
+    using ::std::pair;
+    using ::std::shared_ptr;
+
+    const auto origin_cursor {cursor};
+
+    // head <- endBy parseExpr spaces
+    auto head = parseExpr(s, cursor);
+    if (!head.succ) {
+        cursor = origin_cursor;
+        return {};
+    }
+    if (!skipSpaces(s, cursor)) {
+        cursor = origin_cursor;
+        return {};
+    }
+
+    // tail <- char '.' >> spaces >> parseExpr
+    if (s[cursor++] != '.') {
+        cursor = origin_cursor;
+        return {};
+    }
+    if (!skipSpaces(s, cursor)) {
+        cursor = origin_cursor;
+        return {};
+    }
+    auto tail = parseExpr(s, cursor);
+    if (!tail.succ) {
+        cursor = origin_cursor;
+        return {};
+    }
+
+    return {true, make_shared_value(lv::DottedList(head.value_ptr, tail.value_ptr)), LispValType::DottedList};
+}
+
+/**
+ *
+ * @param s
+ * @param cursor
+ * @return do
+    char '\''
+    x <- parseExpr
+    return $ List [Atom "quote", x]
+ */
+ParserReturns parseQuoted(const ::std::string_view& s, size_t& cursor) {
+    using ::std::stringstream;
+
+    const auto len {s.length()};
+
+    // char '\''
+    char quote {};
+    if (cursor >= len) {
+        return {};
+    }
+    quote = s[cursor++];
+    if (quote != '\'') {
+        --cursor;
+        return {};
+    }
+
+    // x <- parseExpr
+    auto ret = parseExpr(s, cursor);
+    if (!ret.succ) {
+        --cursor;   // for quote
+        return {};
+    }
+    lv::List list;
+    list.push_back(make_shared_value(lv::Atom("quote")));
+    list.push_back(ret.value_ptr);
+
+    return {true, make_shared_value(list), LispValType::Char};
 }
 
 }

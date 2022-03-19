@@ -89,9 +89,9 @@ class Value {
     }
 };
 
-void print_value(std::ostream& os, const emehcs::lv::List& list);
-void print_value(std::ostream& os, const emehcs::lv::DottedList& dotted_list);
-void print_value(std::ostream& os, const emehcs::Value& value);
+void print_value(std::ostream& os, const emehcs::lv::List& list, bool should_prompt_type);
+void print_value(std::ostream& os, const emehcs::lv::DottedList& dotted_list, bool should_prompt_type);
+void print_value(std::ostream& os, const emehcs::Value& value, bool should_prompt_type);
 
 }
 

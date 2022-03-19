@@ -3,68 +3,70 @@
 
 namespace emehcs {
 
-void print_value(std::ostream& os, const lv::List& list) {
+void print_value(std::ostream& os, const lv::List& list, bool should_prompt_type) {
     os << '(';
     bool firstIn = true;
     for (const auto& p : list) {
         if (firstIn) firstIn = false;
         else os << ' ';
-        print_value(os, *p);
+        print_value(os, *p, should_prompt_type);
     }
     os << ')';
 }
 
-void print_value(std::ostream& os, const lv::DottedList& dotted_list) {
+void print_value(std::ostream& os, const lv::DottedList& dotted_list, bool should_prompt_type) {
     os << '(';
-    print_value(os, *dotted_list.first);
+    print_value(os, *dotted_list.first, should_prompt_type);
     os << " . ";
-    print_value(os, *dotted_list.second);
+    print_value(os, *dotted_list.second, should_prompt_type);
     os << ')';
 }
 
 
-void print_value(std::ostream& os, const Value& value) {
+void print_value(std::ostream& os, const Value& value, bool should_prompt_type = false) {
     const auto type = value.get_type();
 
-    switch (type) {
-        case LispValType::Atom:
-            os << "Atom";
-            break;
-        case LispValType::List:
-            os << "List";
-            break;
-        case LispValType::DottedList:
-            os << "DottedList";
-            break;
-        case LispValType::Number:
-            os << "Number";
-            break;
-        case LispValType::Char:
-            os << "Char";
-            break;
-        case LispValType::String:
-            os << "String";
-            break;
-        case LispValType::Bool:
-            os << "Bool";
-            break;
-        case LispValType::Function:
-            os << "Function";
-            break;
-        default:
-            std::terminate();
+    if (should_prompt_type) {
+        switch (type) {
+            case LispValType::Atom:
+                os << "Atom";
+                break;
+            case LispValType::List:
+                os << "List";
+                break;
+            case LispValType::DottedList:
+                os << "DottedList";
+                break;
+            case LispValType::Number:
+                os << "Number";
+                break;
+            case LispValType::Char:
+                os << "Char";
+                break;
+            case LispValType::String:
+                os << "String";
+                break;
+            case LispValType::Bool:
+                os << "Bool";
+                break;
+            case LispValType::Function:
+                os << "Function";
+                break;
+            default:
+                std::terminate();
+        }
+        os << ": ";
     }
-    os << ": ";
 
     switch (type) {
         case LispValType::Atom:
             os << value.get<lv::Atom>().name;
             break;
         case LispValType::List:
-            print_value(os, value.get<lv::List>());
+            print_value(os, value.get<lv::List>(), should_prompt_type);
             break;
         case LispValType::DottedList:
-            print_value(os, value.get<lv::DottedList>());
+            print_value(os, value.get<lv::DottedList>(), should_prompt_type);
             break;
         case LispValType::Number:
             os << value.get<lv::Number>();
