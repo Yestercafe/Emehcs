@@ -23,9 +23,8 @@ ValueSharedPtr eval(ValueSharedPtr pValue) {
         case LispValType::String:
         case LispValType::Number:
         case LispValType::Bool:
-            // return pValue;
-            break;
-        case LispValType::List:
+            return pValue;
+        case LispValType::List: {
             if (pValue->get<lv::List>()[0]->get_type() == LispValType::Atom) {
                 if (pValue->get<lv::List>()[0]->get<lv::Atom>().str == "quote") {
                     return pValue->get<lv::List>()[1];
@@ -39,16 +38,18 @@ ValueSharedPtr eval(ValueSharedPtr pValue) {
                         return fnd->second(pValue->get<lv::List>()[1]);
                     }
                 }
-                auto fnd {BinaryOps.find(func.str)};
+                auto fnd{BinaryOps.find(func.str)};
                 if (fnd != BinaryOps.cend()) {
                     return fold(fnd->second, pValue);
                 }
             }
+            return {};
+        }
         default:
             break;
     }
 
-    return pValue;
+    return nullptr;
 }
 
 }

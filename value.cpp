@@ -1,92 +1,100 @@
 #include <value.hpp>
 #include <exception>
 #include <eval.hpp>
+#include <string>
+#include <sstream>
 
 namespace emehcs {
 
-void print_value(std::ostream& os, const lv::List& list, bool should_prompt_type) {
-    os << '(';
+::std::string show(const lv::List& list, bool should_prompt_type = false) {
+    ::std::stringstream ss;
+    ss << '(';
     bool firstIn = true;
     for (const auto& p : list) {
         if (firstIn) firstIn = false;
-        else os << ' ';
-        print_value(os, *p, should_prompt_type);
+        else ss << ' ';
+        ss << show(*p, should_prompt_type);
     }
-    os << ')';
+    ss << ')';
+    return ss.str();
 }
 
-void print_value(std::ostream& os, const lv::DottedList& dotted_list, bool should_prompt_type) {
-    os << '(';
-    print_value(os, *dotted_list.first, should_prompt_type);
-    os << " . ";
-    print_value(os, *dotted_list.second, should_prompt_type);
-    os << ')';
+::std::string show(const lv::DottedList& dotted_list, bool should_prompt_type = false) {
+    ::std::stringstream ss;
+    ss << '(';
+    bool firstIn = true;
+    for (const auto& p : dotted_list.first) {
+        if (firstIn) firstIn = false;
+        else ss << ' ';
+        ss << show(*p, should_prompt_type);
+    }
+    ss << " . " << show(*dotted_list.second, should_prompt_type) << ')';
+    return ss.str();
 }
 
-
-void print_value(std::ostream& os, const Value& value, bool should_prompt_type = false) {
+::std::string show(const Value& value, bool should_prompt_type = false) {
     const auto type = value.get_type();
+    ::std::stringstream ss;
 
     if (should_prompt_type) {
         switch (type) {
             case LispValType::Atom:
-                os << "Atom";
+                ss << "Atom";
                 break;
             case LispValType::List:
-                os << "List";
+                ss << "List";
                 break;
             case LispValType::DottedList:
-                os << "DottedList";
+                ss << "DottedList";
                 break;
             case LispValType::Number:
-                os << "Number";
+                ss << "Number";
                 break;
             case LispValType::Char:
-                os << "Char";
+                ss << "Char";
                 break;
             case LispValType::String:
-                os << "String";
+                ss << "String";
                 break;
             case LispValType::Bool:
-                os << "Bool";
+                ss << "Bool";
                 break;
             case LispValType::Function:
-                os << "Function";
+                ss << "Function";
                 break;
             default:
                 std::terminate();
         }
-        os << ": ";
+        ss << ": ";
     }
 
     switch (type) {
         case LispValType::Atom:
-            os << value.get<lv::Atom>().str;
-            break;
+            return value.get<lv::Atom>().str;
         case LispValType::List:
-            print_value(os, value.get<lv::List>(), should_prompt_type);
-            break;
+            return show(value.get<lv::List>(), should_prompt_type);
         case LispValType::DottedList:
-            print_value(os, value.get<lv::DottedList>(), should_prompt_type);
+            return show(value.get<lv::DottedList>(), should_prompt_type);
             break;
         case LispValType::Number:
-            os << value.get<lv::Number>();
-            break;
+            return ::std::to_string(value.get<lv::Number>());
         case LispValType::Char:
-            os << "'" << value.get<lv::Char>() << "'";
-            break;
+            ss << "'" << value.get<lv::Char>() << "'";
+            return ss.str();
         case LispValType::String:
-            os << '"' << value.get<lv::String>() << '"';
-            break;
+            ss << '"' << value.get<lv::String>() << '"';
+            return ss.str();
         case LispValType::Bool:
-            os << (value.get<lv::Bool>() ? "#t" : "#f");
-            break;
+            return (value.get<lv::Bool>() ? "#t" : "#f");
         case LispValType::Function:
-            os << "<function>";
-            break;
+            return "<function>";
         default:
-            std::terminate();
+            return "<error>";
     }
+}
+
+void print_value(std::ostream& os, const Value& value, bool should_prompt_type = false) {
+    os << show(value, false);
 }
 
 ValueSharedPtr unpackNum(ValueSharedPtr value_ptr) {
@@ -101,6 +109,32 @@ ValueSharedPtr unpackNum(ValueSharedPtr value_ptr) {
             break;
     }
     return 0;
+}
+
+ValueSharedPtr unpackStr(ValueSharedPtr value_ptr) {
+    switch (value_ptr->get_type()) {
+        case LispValType::String:
+            return value_ptr;
+        case LispValType::Number:
+            return make_shared_value(show(*value_ptr));
+        case LispValType::Bool:
+            return make_shared_value(show(*value_ptr));
+        case LispValType::List:
+            return eval(value_ptr);
+        default:
+            return make_shared_value(lv::String("<notStringOrCantConvertToString>"));  // TODO exception
+    }
+}
+
+ValueSharedPtr unpackBool(ValueSharedPtr value_ptr) {
+    switch (value_ptr->get_type()) {
+        case LispValType::Bool:
+            return value_ptr;
+        case LispValType::List:
+            return eval(value_ptr);
+        default:
+            return make_shared_value(false);      // TODO exception
+    }
 }
 
 }

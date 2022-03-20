@@ -361,7 +361,7 @@ ParserReturns parseAnyList(const ::std::string_view& s, size_t& cursor) {
         ++cursor;
         bool _ {
                 (pr = parseList(s, cursor)).succ
-             || (pr = parseDottedList(s, cursor)).succ
+             // || (pr = parseDottedList(s, cursor)).succ
         };
         if (s[cursor] != ')') {
             pr = {};
@@ -384,22 +384,83 @@ ParserReturns parseAnyList(const ::std::string_view& s, size_t& cursor) {
 ParserReturns parseList(const ::std::string_view& s, size_t& cursor) {
     const auto origin_cursor {cursor};
     lv::List list;
+    ValueSharedPtr tail {nullptr};
+    bool isDottedList {false};
+    skipSpaces(s, cursor);
     while (true) {
-        auto ret = parseExpr(s, cursor);
-        if (!ret.succ) break;
-        list.push_back(ret.value_ptr);
-        bool hasSpaces = skipSpaces(s, cursor);
-        if (!hasSpaces) {
+        auto token {parseExpr(s, cursor)};
+
+        if (!token.succ) {
+            // there are (4) conditions when parseExpr failed:
+            // 1. the next character is dot, and `isDottedList` has not been set
+            if (s[cursor] == '.' && !isDottedList) {
+                // dot means this is a DottedList
+                isDottedList = true;
+                ++cursor;
+                // detect if there is any space next
+                if (!skipSpaces(s, cursor)) {
+                    // if there is no space, this is not an alone dot and is an Atom whose prefix is a dot
+                    tail = nullptr;    // direct to failed returns
+                }
+                else {
+                    // continue to parse the tail of DottedList
+                    continue;
+                }
+            }
+            // 2. the next character is dot, but `isDottedList` has been set
+            else if (s[cursor] == '.' && isDottedList) {
+                // this means there are duplicated dots, List and DottedList parse failed
+                tail = nullptr;        // direct to failed returns
+            }
+            // 3. the next character is not dot, and `isDottedList` has not been set
+            else if (s[cursor] != '.' && !isDottedList) {
+                // this means a List will terminate
+                break;
+            }
+            // 4. the next character is not dot, but `isDottedList` has been set
+            // = else if (s[cursor] != '.' && isDottedList) {
+            else {
+                // this means a DottedList will terminate
+                break;
+            }
+            break;
+        }
+        // = else if (token.succ)
+
+        // then there are 3 conditions:
+        // 1. this is still a List
+        if (!isDottedList) {
+            list.push_back(token.value_ptr);
+        }
+        // 2. it is a DottedList, and tail is empty
+        else if (tail == nullptr) {
+            tail = token.value_ptr;
+        }
+        // 3. it is a DottedList, and tail will be duplicated
+        else {
+            tail = nullptr;      // failed returns
+            break;
+        }
+
+        // spaces
+        if (!skipSpaces(s, cursor)) {   // if there is no space back, the list parser will must be terminated
+            // `skipSpaces` has popped out the terminated character, here is no work for cursor
             break;
         }
     }
 
-    if (list.size() < 2) {
+    // Everyone doesn't pay attention to `list`, so there are 4 conditions:
+    if (!isDottedList) {           // two conditions, exactly in this branch tail is always `nullptr`
+        return {true, make_shared_value(list), LispValType::List};
+    }
+    else if (isDottedList && tail != nullptr) {     // a normal DottedList
+        return {true, make_shared_value(lv::DottedList(list, tail)), LispValType::DottedList};
+    }
+    // = else if (isDottedList && tail == nullptr) {
+    else {                         // the last branch, the DottedList doesn't have tail, this must be false
         cursor = origin_cursor;
         return {};
     }
-
-    return {true, make_shared_value(list), LispValType::List};
 }
 
 /**
@@ -443,7 +504,8 @@ ParserReturns parseDottedList(const ::std::string_view& s, size_t& cursor) {
         return {};
     }
 
-    return {true, make_shared_value(lv::DottedList(head.value_ptr, tail.value_ptr)), LispValType::DottedList};
+    return {};
+    // return {true, make_shared_value(lv::DottedList(head.value_ptr, tail.value_ptr)), LispValType::DottedList};
 }
 
 /**

@@ -35,7 +35,7 @@ struct Atom {
     Atom(Atom&&) = default;
 };
 using List         = ::std::deque<::std::shared_ptr<Value>>;
-using DottedList   = ::std::pair<::std::shared_ptr<Value>, ::std::shared_ptr<Value>>;
+using DottedList   = ::std::pair<::std::deque<::std::shared_ptr<Value>>, ::std::shared_ptr<Value>>;
 using Number       = ::std::int64_t;
 using Char         = char;
 using String       = ::std::string;
@@ -89,11 +89,15 @@ class Value {
     }
 };
 
-void print_value(std::ostream& os, const emehcs::lv::List& list, bool should_prompt_type);
-void print_value(std::ostream& os, const emehcs::lv::DottedList& dotted_list, bool should_prompt_type);
+::std::string show(const lv::List& list, bool);
+::std::string show(const lv::DottedList& dotted_list, bool);
+::std::string show(const Value& value, bool);
+
 void print_value(std::ostream& os, const emehcs::Value& value, bool should_prompt_type);
 
 ValueSharedPtr unpackNum(ValueSharedPtr value_ptr);
+ValueSharedPtr unpackStr(ValueSharedPtr value_ptr);
+ValueSharedPtr unpackBool(ValueSharedPtr value_ptr);
 
 }
 
