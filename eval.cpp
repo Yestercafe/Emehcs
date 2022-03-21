@@ -1,5 +1,6 @@
 #include <eval.hpp>
 #include <debug.hpp>
+#include <exception.hpp>
 
 namespace emehcs {
 
@@ -25,7 +26,7 @@ ValueSharedPtr eval(ValueSharedPtr pValue) {
         case LispValType::Bool:
             return pValue;
         case LispValType::List: {
-            if (pValue->get<lv::List>()[0]->get_type() == LispValType::Atom) {
+            if (pValue->get<lv::List>().size() > 0 && pValue->get<lv::List>()[0]->get_type() == LispValType::Atom) {
                 if (pValue->get<lv::List>()[0]->get<lv::Atom>().str == "quote") {
                     return pValue->get<lv::List>()[1];
                 }
@@ -43,13 +44,18 @@ ValueSharedPtr eval(ValueSharedPtr pValue) {
                     return fold(fnd->second, pValue);
                 }
             }
-            return {};
+            if (pValue->get<lv::List>().size() > 0) {
+                throw NotFunctionException("[NotFunctionException] Head of a `List` is not a function/functor", pValue->get<lv::List>()[0]);
+            }
+            else {
+                throw BadSpecialFormException("[BadSpecialFormException] A empty `List` without quote", pValue);
+            }
         }
         default:
             break;
     }
 
-    return nullptr;
+    throw BadSpecialFormException("[BadSpecialFormException] Unrecognized special form", pValue);
 }
 
 }

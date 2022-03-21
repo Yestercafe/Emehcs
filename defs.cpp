@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <eval.hpp>
 #include <debug.hpp>
+#include <exception.hpp>
 
 namespace emehcs {
 
@@ -35,8 +36,7 @@ ValueSharedPtr listCar(ValueSharedPtr a) {
         case LispValType::DottedList:
             return a->get<lv::DottedList>().first.front();
         default:
-            ::std::cout << "car: arg error" << ::std::endl;
-            return nullptr;  // TODO exception
+            throw TypeMismatchException("[TypeMismatchException] Excepted a `list` but received", a);
     }
 }
 
@@ -57,8 +57,7 @@ ValueSharedPtr listCdr(ValueSharedPtr a) {
             return make_shared_value(lv::DottedList(first_cdr, a->get<lv::DottedList>().second));
         }
         default:
-            ::std::cout << "cdr: arg error" << ::std::endl;
-            return nullptr;  // TODO exception
+            throw TypeMismatchException("[TypeMismatchException] Excepted a `list` but received", a);
     }
 }
 
@@ -219,8 +218,7 @@ ValueSharedPtr eqv_aux(ValueSharedPtr a, ValueSharedPtr b) {
     bool ret = false;
 
     if (a->get_type() != b->get_type()) {
-        ::std::cout << "eqv: type of a /= type of b" << ::std::endl;
-        return nullptr;
+        throw TypeMismatchException("[TypeMismatchException] Can't compare with different types, the second one is");
     }
     switch (a->get_type()) {
         case LispValType::Bool:

@@ -2,6 +2,7 @@
 #include <cctype>
 #include <sstream>
 #include <memory>
+#include <exception.hpp>
 
 namespace emehcs {
 
@@ -109,6 +110,7 @@ ParserReturns parseAtom(const ::std::string_view& s, size_t& cursor) {
               char '\''
               return $ Char c
  */
+// FIXME wrong char pattern https://rebelsky.cs.grinnell.edu/Courses/CS151/2007F/Readings/strings-reading.html
 ParserReturns parseChar(const ::std::string_view& s, size_t& cursor) {
     using ::std::stringstream;
 
@@ -143,10 +145,8 @@ ParserReturns parseChar(const ::std::string_view& s, size_t& cursor) {
             ch = fnd->second;
         }                 // not a correct escaped char
         else {
-            // TODO throws exception
-            ::std::cerr << "Escaped char error" << ::std::endl;
             cursor -= 3;
-            return {};
+            throw ParserError("[ParserError] A invalid `Char` literal");
         }
     }
 
