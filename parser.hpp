@@ -33,7 +33,7 @@ ParserReturns parseOct(const ::std::string_view& s, size_t& cursor);
 ParserReturns parseHex(const ::std::string_view& s, size_t& cursor);
 ParserReturns parseAnyList(const ::std::string_view& s, size_t& cursor);
 ParserReturns parseList(const ::std::string_view& s, size_t& cursor);
-ParserReturns parseDottedList(const ::std::string_view& s, size_t& cursor);
+[[deprecated]] ParserReturns parseDottedList(const ::std::string_view& s, size_t& cursor);
 ParserReturns parseQuoted(const ::std::string_view& s, size_t& cursor);
 
 }

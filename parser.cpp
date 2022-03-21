@@ -462,7 +462,7 @@ ParserReturns parseList(const ::std::string_view& s, size_t& cursor) {
     tail <- char '.' >> spaces >> parseExpr
     return $ DottedList head tail
  */
-ParserReturns parseDottedList(const ::std::string_view& s, size_t& cursor) {
+[[deprecated]] ParserReturns parseDottedList(const ::std::string_view& s, size_t& cursor) {
     using ::std::pair;
     using ::std::shared_ptr;
 

@@ -4,6 +4,7 @@
 #include <eval.hpp>
 #include <string>
 #include <exception.hpp>
+#include <fstream>
 
 void test1() {
     using namespace emehcs;
@@ -29,31 +30,44 @@ int repl() {
 
     while (::std::getline(::std::cin, line)) {
         try {
-            size_t cursor{0u};
-            auto ret{emehcs::parseExpr(line, cursor)};
-            if (ret.succ) {
-                auto result{::emehcs::eval(ret.value_ptr)};
-                if (result) {
-                    ::std::cout << "eval[" << cnt << "]: " << *result << ::std::endl;
-                    ++cnt;
-                } else {
-                    ::std::cout << "eval failed" << ::std::endl;
-                }
-            } else {
-                ::std::cout << "parse failed" << ::std::endl;
-            }
+            size_t cursor {0u};
+            auto result {::emehcs::eval(::emehcs::parseExpr(line, cursor).value_ptr)};
+            ::std::cout << "eval[" << cnt << "]: " << *result << ::std::endl;
         }
-        catch (emehcs::LispException& e) {
-            ::std::cout << e.what() << '\n';
+        catch (::emehcs::LispException& e) {
+            ::std::cerr << e.what() << '\n';
         }
         ::std::cout << ">>> ";
     }
     return 0;
 }
 
-int main()
-{
-//    ::test1();
+int readFromFile(char* filename) {
+    ::std::ifstream ifs(filename, ::std::ios::in);
+    ::std::string line;
+    while (::std::getline(ifs, line)) {
+        try {
+            size_t cursor {0u};
+            ::std::cout << ">>> " << line << ::std::endl;
+            auto result {::emehcs::eval(::emehcs::parseExpr(line, cursor).value_ptr)};
+            ::std::cout << "=> " << *result << ::std::endl;
+        }
+        catch (::emehcs::LispException& e) {
+            ::std::cout << e.what() << '\n';
+        }
+    }
 
-    return repl();
+    return 0;
+}
+
+int main(int argc, char* argv[])
+{
+    if (argc == 1) {
+        return repl();
+    }
+    else {
+        for (size_t i = 1; i < argc; ++i) {
+            readFromFile(argv[i]);
+        }
+    }
 }
