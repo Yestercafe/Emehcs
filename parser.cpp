@@ -108,55 +108,43 @@ ParserReturns parseAtom(const ::std::string_view& s, size_t& cursor) {
  * @return do char '\''
               c <- noneOf "'"
               char '\''
-              return $ Char c
+              return $ Char c   (deprecated)
+           use "#\?" instead
  */
-// FIXME wrong char pattern https://rebelsky.cs.grinnell.edu/Courses/CS151/2007F/Readings/strings-reading.html
 ParserReturns parseChar(const ::std::string_view& s, size_t& cursor) {
     using ::std::stringstream;
 
     const auto len {s.length()};
-
-    // char '\''
-    char quote {};
-    if (cursor >= len) {
-        return {};
-    }
-    quote = s[cursor++];
-    if (quote != '\'') {
-        --cursor;
-        return {};
-    }
-
-    // c <- noneOf "'"
-    if (cursor >= len) {
-        --cursor;
-        return {};
-    }
     char ch {};
-    ch = s[cursor++];
-    if (ch == '\'') {
-        cursor -= 2;
-        return {};
-    }
-    else if (ch == '\\') {              // escaped char
-        char escaped = s[cursor++];
-        auto fnd = EscapedMap.cbegin();
-        if ((fnd = EscapedMap.find(escaped)) != EscapedMap.cend()) {
-            ch = fnd->second;
-        }                 // not a correct escaped char
-        else {
-            cursor -= 3;
-            throw ParserError("[ParserError] A invalid `Char` literal");
-        }
-    }
 
-    if (cursor >= len) {
-        cursor -= 2;
+    // s[cursor:cursor+3] is a `Char` pattern
+    if (cursor + 2 >= len) {
         return {};
     }
-    quote = s[cursor++];
-    if (quote != '\'') {
-        cursor -= 3;
+    if (s[cursor] == '#' && s[cursor + 1] == '\\') {
+        if (s[cursor + 2] != '\\') {     // not an escaped char
+            ch = s[cursor + 2];
+        }
+        else {
+            if (cursor + 3 >= len) {
+                throw ParserError("[ParserError] Can't process escaped chars in `Char` correctly");
+            }
+            else {
+                auto fnd = EscapedMap.find(s[cursor + 3]);
+                if (fnd != EscapedMap.cend()) {
+                    ch = fnd->second;
+                    // an escaped char makes an extra step
+                    ++cursor;
+                }
+                else {
+                    throw ParserError("[ParserError] Can't process escaped chars in `Char` correctly");
+                }
+            }
+        }
+        // step in 3
+        cursor += 3;
+    }
+    else {
         return {};
     }
 
@@ -176,6 +164,7 @@ ParserReturns parseString(const ::std::string_view& s, size_t& cursor) {
     using ::std::stringstream;
 
     const auto len {s.length()};
+    const auto origin_cursor = cursor;
 
     // char '"'
     char quote {};
@@ -204,7 +193,8 @@ ParserReturns parseString(const ::std::string_view& s, size_t& cursor) {
                 x << fnd->second;
             }                 // not a correct escaped char
             else {
-                x << '\\' << escaped;
+                cursor = origin_cursor;
+                throw ParserError("[ParserError] Can't process escaped chars in `String` correctly");
             }
         }
         else {
