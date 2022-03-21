@@ -8,7 +8,7 @@
 
 namespace emehcs {
 
-[[deprecated]] struct ParserReturns {
+struct [[deprecated]] ParserReturns {
     bool succ;
     ::std::shared_ptr<Value> value_ptr;
     LispValType type;
