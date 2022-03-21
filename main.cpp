@@ -31,11 +31,11 @@ int repl() {
     while (::std::getline(::std::cin, line)) {
         try {
             size_t cursor {0u};
-            auto result {::emehcs::eval(::emehcs::parseExpr(line, cursor).value_ptr)};
+            auto result {::emehcs::eval(::emehcs::parseExpr(line, cursor))};
             ::std::cout << "eval[" << cnt << "]: " << *result << ::std::endl;
         }
         catch (::emehcs::LispException& e) {
-            ::std::cerr << e.what() << '\n';
+            ::std::cout << e.what() << '\n';
         }
         ::std::cout << ">>> ";
     }
@@ -49,7 +49,7 @@ int readFromFile(char* filename) {
         try {
             size_t cursor {0u};
             ::std::cout << ">>> " << line << ::std::endl;
-            auto result {::emehcs::eval(::emehcs::parseExpr(line, cursor).value_ptr)};
+            auto result {::emehcs::eval(::emehcs::parseExpr(line, cursor))};
             ::std::cout << "=> " << *result << ::std::endl;
         }
         catch (::emehcs::LispException& e) {

@@ -26,19 +26,23 @@ bool skipSpaces(const ::std::string_view& s, size_t& cursor) {
        <|> parseString
        <|> parseAtom
  */
-ParserReturns parseExpr(const ::std::string_view& s, size_t& cursor) {
-    ParserReturns pr;
+ValueSharedPtr parseExpr(const ::std::string_view& s, size_t& cursor) {
+    ValueSharedPtr expr;
 
-    bool _ {
-            (pr = parseNumber(s, cursor)).succ
-         || (pr = parseChar(s, cursor)).succ
-         || (pr = parseString(s, cursor)).succ
-         || (pr = parseAtom(s, cursor)).succ
-         || (pr = parseQuoted(s, cursor)).succ
-         || (pr = parseAnyList(s, cursor)).succ
+    bool canParse {
+            (expr = parseNumber(s, cursor))
+         || (expr = parseChar(s, cursor))
+         || (expr = parseString(s, cursor))
+         || (expr = parseAtom(s, cursor))
+         || (expr = parseQuoted(s, cursor))
+         || (expr = parseAnyList(s, cursor))
     };
 
-    return pr;
+    if (!canParse) {
+        throw ParserError("[ParseError] this one can't be parsed -> " + ::std::string(s));
+    }
+
+    return expr;
 }
 
 /**
@@ -53,7 +57,7 @@ ParserReturns parseExpr(const ::std::string_view& s, size_t& cursor) {
                          "#f" -> Bool False
                          otherwise -> Atom atom
  */
-ParserReturns parseAtom(const ::std::string_view& s, size_t& cursor) {
+ValueSharedPtr parseAtom(const ::std::string_view& s, size_t& cursor) {
     using ::std::stringstream;
     using ::std::isalpha;
     using ::std::isdigit;
@@ -62,12 +66,12 @@ ParserReturns parseAtom(const ::std::string_view& s, size_t& cursor) {
 
     // first <- letter <|> symbol
     if (cursor >= len) {
-        return {};
+        return nullptr;
     }
     char first {s[cursor++]};
     if (!isalpha(first) && !isSymbol(first)) {
         --cursor;
-        return {};
+        return nullptr;
     }
 
     // rest <- many (letter <|> digit <|> symbol)
@@ -89,16 +93,14 @@ ParserReturns parseAtom(const ::std::string_view& s, size_t& cursor) {
 
     // return
     if (atom == "#t") {        // Bool true
-        return {true, make_shared_value(lv::Bool(true)), LispValType::Bool};
+        return make_shared_value(lv::Bool(true));
     }
     else if (atom == "#f") {   // Bool false
-        return {true, make_shared_value(lv::Bool(false)), LispValType::Bool};
+        return make_shared_value(lv::Bool(false));
     }
     else {                     // regular atom
-        return {true, make_shared_value(lv::Atom(atom)), LispValType::Atom};
+        return make_shared_value(lv::Atom(atom));
     }
-
-    return {};
 }
 
 /**
@@ -111,7 +113,7 @@ ParserReturns parseAtom(const ::std::string_view& s, size_t& cursor) {
               return $ Char c   (deprecated)
            use "#\?" instead
  */
-ParserReturns parseChar(const ::std::string_view& s, size_t& cursor) {
+ValueSharedPtr parseChar(const ::std::string_view& s, size_t& cursor) {
     using ::std::stringstream;
 
     const auto len {s.length()};
@@ -119,7 +121,7 @@ ParserReturns parseChar(const ::std::string_view& s, size_t& cursor) {
 
     // s[cursor:cursor+3] is a `Char` pattern
     if (cursor + 2 >= len) {
-        return {};
+        return nullptr;
     }
     if (s[cursor] == '#' && s[cursor + 1] == '\\') {
         if (s[cursor + 2] != '\\') {     // not an escaped char
@@ -145,10 +147,10 @@ ParserReturns parseChar(const ::std::string_view& s, size_t& cursor) {
         cursor += 3;
     }
     else {
-        return {};
+        return nullptr;
     }
 
-    return {true, make_shared_value(ch), LispValType::Char};
+    return make_shared_value(ch);
 }
 
 /**
@@ -160,7 +162,7 @@ ParserReturns parseChar(const ::std::string_view& s, size_t& cursor) {
               char '"'
               return $ String x
  */
-ParserReturns parseString(const ::std::string_view& s, size_t& cursor) {
+ValueSharedPtr parseString(const ::std::string_view& s, size_t& cursor) {
     using ::std::stringstream;
 
     const auto len {s.length()};
@@ -169,12 +171,12 @@ ParserReturns parseString(const ::std::string_view& s, size_t& cursor) {
     // char '"'
     char quote {};
     if (cursor >= len) {
-        return {};
+        return nullptr;
     }
     quote = s[cursor++];
     if (quote != '"') {
         --cursor;
-        return {};
+        return nullptr;
     }
 
     // x <- many (noneOf "\"")
@@ -205,7 +207,7 @@ ParserReturns parseString(const ::std::string_view& s, size_t& cursor) {
     // char <- '"'
     quote = s[cursor++];
 
-    return {true, make_shared_value(lv::String(x.str())), LispValType::String};
+    return make_shared_value(lv::String(x.str()));
 }
 
 /**
@@ -216,16 +218,16 @@ ParserReturns parseString(const ::std::string_view& s, size_t& cursor) {
        <|> try parseOct
        <|> try parseHex
  */
-ParserReturns parseNumber(const ::std::string_view& s, size_t& cursor) {
-    ParserReturns pr;
+ValueSharedPtr parseNumber(const ::std::string_view& s, size_t& cursor) {
+    ValueSharedPtr expr;
 
     bool _ {
-            (pr = parseDec(s, cursor)).succ
-         || (pr = parseOct(s, cursor)).succ
-         || (pr = parseHex(s, cursor)).succ
+            (expr = parseDec(s, cursor))
+         || (expr = parseOct(s, cursor))
+         || (expr = parseHex(s, cursor))
     };
 
-    return pr;
+    return expr;
 }
 
 /**
@@ -235,7 +237,7 @@ ParserReturns parseNumber(const ::std::string_view& s, size_t& cursor) {
  * @return do n <- many1 digit
               return (Number (read n))
  */
-ParserReturns parseDec(const ::std::string_view& s, size_t& cursor) {
+ValueSharedPtr parseDec(const ::std::string_view& s, size_t& cursor) {
     using ::std::stringstream;
     using ::std::isdigit;
 
@@ -245,7 +247,7 @@ ParserReturns parseDec(const ::std::string_view& s, size_t& cursor) {
     char c {};
     stringstream n;
     if (cursor >= len) {
-       return {};
+       return nullptr;
     }
     while (cursor < len) {
         c = s[cursor++];
@@ -257,33 +259,33 @@ ParserReturns parseDec(const ::std::string_view& s, size_t& cursor) {
     }
 
     if (n.str().length() == 0) {
-        return {};
+        return nullptr;
     }
 
     lv::Number number_n {::std::stoll(n.str())};
-    return {true, make_shared_value(number_n), LispValType::Number};
+    return make_shared_value(number_n);
 }
 
 template<typename Pred>
-static ParserReturns parseHexAux(const ::std::string_view& s, size_t& cursor, char flag, Pred& pred) {
+static ValueSharedPtr parseHexAux(const ::std::string_view& s, size_t& cursor, char flag, Pred& pred) {
     using ::std::stringstream;
 
     const auto len {s.length()};
 
     // char <- '#'
-    if (cursor >= len) return {};
+    if (cursor >= len) return nullptr;
     char sharp = s[cursor++];
     if (sharp != '#') {
         --cursor;
-        return {};
+        return nullptr;
     }
 
     // char <- 'x'
-    if (cursor >= len) return {};
+    if (cursor >= len) return nullptr;
     char f = s[cursor++];
     if (f != flag) {
         cursor -= 2;
-        return {};
+        return nullptr;
     }
 
     // n <- many1 hexDigit
@@ -291,7 +293,7 @@ static ParserReturns parseHexAux(const ::std::string_view& s, size_t& cursor, ch
     stringstream n;
     if (cursor >= len) {
         cursor -= 2;
-        return {};
+        return nullptr;
     }
     while (cursor < len) {
         c = s[cursor++];
@@ -304,11 +306,11 @@ static ParserReturns parseHexAux(const ::std::string_view& s, size_t& cursor, ch
 
     if (n.str().length() == 0) {
         cursor -= 2;
-        return {};
+        return nullptr;
     }
 
     lv::Number number_n {::std::stoll(n.str(), nullptr, (flag == 'x' ? 16 : 8))};
-    return {true, make_shared_value(number_n), LispValType::Number};
+    return make_shared_value(number_n);
 }
 
 /**
@@ -320,7 +322,7 @@ static ParserReturns parseHexAux(const ::std::string_view& s, size_t& cursor, ch
               rest <- many1 octDigit
               return (Number (fst (readOct rest !! 0)))
  */
-ParserReturns parseOct(const ::std::string_view& s, size_t& cursor) {
+ValueSharedPtr parseOct(const ::std::string_view& s, size_t& cursor) {
     return parseHexAux(s, cursor, 'o', isODigit);
 }
 
@@ -333,7 +335,7 @@ ParserReturns parseOct(const ::std::string_view& s, size_t& cursor) {
               rest <- many1 hexDigit
               return (Number (fst (readHex rest !! 0)))
  */
-ParserReturns parseHex(const ::std::string_view& s, size_t& cursor) {
+ValueSharedPtr parseHex(const ::std::string_view& s, size_t& cursor) {
     return parseHexAux(s, cursor, 'x', isXDigit);
 }
 
@@ -343,26 +345,27 @@ ParserReturns parseHex(const ::std::string_view& s, size_t& cursor) {
  * @param cursor
  * @return
  */
-ParserReturns parseAnyList(const ::std::string_view& s, size_t& cursor) {
-    ParserReturns pr {};
+ValueSharedPtr parseAnyList(const ::std::string_view& s, size_t& cursor) {
+    ValueSharedPtr expr {nullptr};
     const auto origin_cursor = cursor;
 
     if (s[cursor] == '(') {
         ++cursor;
-        bool _ {
-                (pr = parseList(s, cursor)).succ
-             // || (pr = parseDottedList(s, cursor)).succ
-        };
-        if (s[cursor] != ')') {
-            pr = {};
+        expr = parseList(s, cursor);
+        if (expr == nullptr) {
             cursor = origin_cursor;
+            throw ParserError("[ParserError] Can't parse `List` correct");
+        }
+        else if (s[cursor] != ')') {
+            cursor = origin_cursor;
+            throw ParserError("[ParserError] Can't parse `List` correct");
         }
         else {
             ++cursor;
         }
     }
 
-    return pr;
+    return expr;
 }
 
 /**
@@ -371,7 +374,7 @@ ParserReturns parseAnyList(const ::std::string_view& s, size_t& cursor) {
  * @param cursor
  * @return liftM List $ sepBy parseExpr spaces
  */
-ParserReturns parseList(const ::std::string_view& s, size_t& cursor) {
+ValueSharedPtr parseList(const ::std::string_view& s, size_t& cursor) {
     const auto origin_cursor {cursor};
     lv::List list;
     ValueSharedPtr tail {nullptr};
@@ -380,7 +383,7 @@ ParserReturns parseList(const ::std::string_view& s, size_t& cursor) {
     while (true) {
         auto token {parseExpr(s, cursor)};
 
-        if (!token.succ) {
+        if (token == nullptr) {
             // there are (4) conditions when parseExpr failed:
             // 1. the next character is dot, and `isDottedList` has not been set
             if (s[cursor] == '.' && !isDottedList) {
@@ -420,11 +423,11 @@ ParserReturns parseList(const ::std::string_view& s, size_t& cursor) {
         // then there are 3 conditions:
         // 1. this is still a List
         if (!isDottedList) {
-            list.push_back(token.value_ptr);
+            list.push_back(token);
         }
         // 2. it is a DottedList, and tail is empty
         else if (tail == nullptr) {
-            tail = token.value_ptr;
+            tail = token;
         }
         // 3. it is a DottedList, and tail will be duplicated
         else {
@@ -441,15 +444,15 @@ ParserReturns parseList(const ::std::string_view& s, size_t& cursor) {
 
     // Everyone doesn't pay attention to `list`, so there are 4 conditions:
     if (!isDottedList) {           // two conditions, exactly in this branch tail is always `nullptr`
-        return {true, make_shared_value(list), LispValType::List};
+        return make_shared_value(list);
     }
     else if (isDottedList && tail != nullptr) {     // a normal DottedList
-        return {true, make_shared_value(lv::DottedList(list, tail)), LispValType::DottedList};
+        return make_shared_value(lv::DottedList(list, tail));
     }
     // = else if (isDottedList && tail == nullptr) {
     else {                         // the last branch, the DottedList doesn't have tail, this must be false
         cursor = origin_cursor;
-        return {};
+        return nullptr;
     }
 }
 
@@ -462,7 +465,7 @@ ParserReturns parseList(const ::std::string_view& s, size_t& cursor) {
     tail <- char '.' >> spaces >> parseExpr
     return $ DottedList head tail
  */
-[[deprecated]] ParserReturns parseDottedList(const ::std::string_view& s, size_t& cursor) {
+[[deprecated]] ValueSharedPtr parseDottedList(const ::std::string_view& s, size_t& cursor) {
     using ::std::pair;
     using ::std::shared_ptr;
 
@@ -470,31 +473,31 @@ ParserReturns parseList(const ::std::string_view& s, size_t& cursor) {
 
     // head <- endBy parseExpr spaces
     auto head = parseExpr(s, cursor);
-    if (!head.succ) {
+    if (head == nullptr) {
         cursor = origin_cursor;
-        return {};
+        return nullptr;
     }
     if (!skipSpaces(s, cursor)) {
         cursor = origin_cursor;
-        return {};
+        return nullptr;
     }
 
     // tail <- char '.' >> spaces >> parseExpr
     if (s[cursor++] != '.') {
         cursor = origin_cursor;
-        return {};
+        return nullptr;
     }
     if (!skipSpaces(s, cursor)) {
         cursor = origin_cursor;
         return {};
     }
     auto tail = parseExpr(s, cursor);
-    if (!tail.succ) {
+    if (tail == nullptr) {
         cursor = origin_cursor;
-        return {};
+        return nullptr;
     }
 
-    return {};
+    return nullptr;
     // return {true, make_shared_value(lv::DottedList(head.value_ptr, tail.value_ptr)), LispValType::DottedList};
 }
 
@@ -507,7 +510,7 @@ ParserReturns parseList(const ::std::string_view& s, size_t& cursor) {
     x <- parseExpr
     return $ List [Atom "quote", x]
  */
-ParserReturns parseQuoted(const ::std::string_view& s, size_t& cursor) {
+ValueSharedPtr parseQuoted(const ::std::string_view& s, size_t& cursor) {
     using ::std::stringstream;
 
     const auto len {s.length()};
@@ -515,7 +518,7 @@ ParserReturns parseQuoted(const ::std::string_view& s, size_t& cursor) {
     // char '\''
     char quote {};
     if (cursor >= len) {
-        return {};
+        return nullptr;
     }
     quote = s[cursor++];
     if (quote != '\'') {
@@ -525,15 +528,15 @@ ParserReturns parseQuoted(const ::std::string_view& s, size_t& cursor) {
 
     // x <- parseExpr
     auto ret = parseExpr(s, cursor);
-    if (!ret.succ) {
+    if (ret == nullptr) {
         --cursor;   // for quote
-        return {};
+        return nullptr;
     }
     lv::List list;
     list.push_back(make_shared_value(lv::Atom("quote")));
-    list.push_back(ret.value_ptr);
+    list.push_back(ret);
 
-    return {true, make_shared_value(list), LispValType::Char};
+    return make_shared_value(list);
 }
 
 }

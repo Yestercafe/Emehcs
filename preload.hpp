@@ -7,7 +7,6 @@
 namespace emehcs {
 
 class Value;
-class ParserReturns;
 
 using ValueSharedPtr = ::std::shared_ptr<Value>;
 

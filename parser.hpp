@@ -8,7 +8,7 @@
 
 namespace emehcs {
 
-struct ParserReturns {
+[[deprecated]] struct ParserReturns {
     bool succ;
     ::std::shared_ptr<Value> value_ptr;
     LispValType type;
@@ -23,18 +23,18 @@ struct ParserReturns {
 };
 
 bool skipSpaces(const ::std::string_view& s, size_t& cursor);
-ParserReturns parseExpr(const ::std::string_view& s, size_t& cursor);
-ParserReturns parseAtom(const ::std::string_view& s, size_t& cursor);
-ParserReturns parseChar(const ::std::string_view& s, size_t& cursor);
-ParserReturns parseString(const ::std::string_view& s, size_t& cursor);
-ParserReturns parseNumber(const ::std::string_view& s, size_t& cursor);
-ParserReturns parseDec(const ::std::string_view& s, size_t& cursor);
-ParserReturns parseOct(const ::std::string_view& s, size_t& cursor);
-ParserReturns parseHex(const ::std::string_view& s, size_t& cursor);
-ParserReturns parseAnyList(const ::std::string_view& s, size_t& cursor);
-ParserReturns parseList(const ::std::string_view& s, size_t& cursor);
-[[deprecated]] ParserReturns parseDottedList(const ::std::string_view& s, size_t& cursor);
-ParserReturns parseQuoted(const ::std::string_view& s, size_t& cursor);
+ValueSharedPtr parseExpr(const ::std::string_view& s, size_t& cursor);
+ValueSharedPtr parseAtom(const ::std::string_view& s, size_t& cursor);
+ValueSharedPtr parseChar(const ::std::string_view& s, size_t& cursor);
+ValueSharedPtr parseString(const ::std::string_view& s, size_t& cursor);
+ValueSharedPtr parseNumber(const ::std::string_view& s, size_t& cursor);
+ValueSharedPtr parseDec(const ::std::string_view& s, size_t& cursor);
+ValueSharedPtr parseOct(const ::std::string_view& s, size_t& cursor);
+ValueSharedPtr parseHex(const ::std::string_view& s, size_t& cursor);
+ValueSharedPtr parseAnyList(const ::std::string_view& s, size_t& cursor);
+ValueSharedPtr parseList(const ::std::string_view& s, size_t& cursor);
+[[deprecated]] ValueSharedPtr parseDottedList(const ::std::string_view& s, size_t& cursor);
+ValueSharedPtr parseQuoted(const ::std::string_view& s, size_t& cursor);
 
 }
 
