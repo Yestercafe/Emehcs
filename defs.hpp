@@ -9,7 +9,7 @@
 
 namespace emehcs {
 
-using uint = ::std::size_t;
+using size_t = ::std::size_t;
 
 constexpr ::std::string_view Symbol = "!$%&|*+-/:<=?>@^_~#";
 

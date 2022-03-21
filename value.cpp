@@ -6,7 +6,7 @@
 
 namespace emehcs {
 
-::std::string show(const lv::List& list, bool should_prompt_type = false) {
+::std::string show(const lv::List& list, bool should_prompt_type) {
     ::std::stringstream ss;
     ss << '(';
     bool firstIn = true;
@@ -19,7 +19,7 @@ namespace emehcs {
     return ss.str();
 }
 
-::std::string show(const lv::DottedList& dotted_list, bool should_prompt_type = false) {
+::std::string show(const lv::DottedList& dotted_list, bool should_prompt_type) {
     ::std::stringstream ss;
     ss << '(';
     bool firstIn = true;
@@ -32,7 +32,7 @@ namespace emehcs {
     return ss.str();
 }
 
-::std::string show(const Value& value, bool should_prompt_type = false) {
+::std::string show(const Value& value, bool should_prompt_type) {
     const auto type = value.get_type();
     ::std::stringstream ss;
 
@@ -93,7 +93,7 @@ namespace emehcs {
     }
 }
 
-void print_value(std::ostream& os, const Value& value, bool should_prompt_type = false) {
+void print_value(std::ostream& os, const Value& value, bool should_prompt_type) {
     os << show(value, false);
 }
 

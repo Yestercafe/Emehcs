@@ -89,11 +89,11 @@ class Value {
     }
 };
 
-::std::string show(const lv::List& list, bool);
-::std::string show(const lv::DottedList& dotted_list, bool);
-::std::string show(const Value& value, bool);
+::std::string show(const lv::List& list, bool = false);
+::std::string show(const lv::DottedList& dotted_list, bool = false);
+::std::string show(const Value& value, bool = false);
 
-void print_value(std::ostream& os, const emehcs::Value& value, bool should_prompt_type);
+void print_value(std::ostream& os, const emehcs::Value& value, bool = false);
 
 ValueSharedPtr unpackNum(ValueSharedPtr value_ptr);
 ValueSharedPtr unpackStr(ValueSharedPtr value_ptr);

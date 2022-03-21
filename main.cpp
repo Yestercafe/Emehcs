@@ -3,6 +3,7 @@
 #include <parser.hpp>
 #include <eval.hpp>
 #include <string>
+#include <exception.hpp>
 
 void test1() {
     using namespace emehcs;
@@ -20,28 +21,39 @@ void test1() {
     ::std::cout << list << ::std::endl;
 }
 
+int repl() {
+    ::std::string line;
+    ::std::cout << ">>> ";
+
+    size_t cnt {0u};
+
+    while (::std::getline(::std::cin, line)) {
+        try {
+            size_t cursor{0u};
+            auto ret{emehcs::parseExpr(line, cursor)};
+            if (ret.succ) {
+                auto result{::emehcs::eval(ret.value_ptr)};
+                if (result) {
+                    ::std::cout << "eval[" << cnt << "]: " << *result << ::std::endl;
+                    ++cnt;
+                } else {
+                    ::std::cout << "eval failed" << ::std::endl;
+                }
+            } else {
+                ::std::cout << "parse failed" << ::std::endl;
+            }
+        }
+        catch (emehcs::LispException& e) {
+            ::std::cout << e.what() << '\n';
+        }
+        ::std::cout << ">>> ";
+    }
+    return 0;
+}
+
 int main()
 {
 //    ::test1();
 
-    ::std::string line;
-    while (::std::getline(::std::cin, line)) {
-        size_t cursor {0u};
-        auto ret {emehcs::parseExpr(line, cursor)};
-        if (ret.succ) {
-            auto result {::emehcs::eval(ret.value_ptr)};
-            if (result) {
-                ::std::cout << *result << ::std::endl;
-            }
-            else {
-                ::std::cout << "eval failed" << ::std::endl;
-            }
-        }
-        else {
-            ::std::cout << "parse failed" << ::std::endl;
-        }
-
-    }
-
-    return 0;
+    return repl();
 }
