@@ -64,7 +64,7 @@ ParserReturns parseAtom(const ::std::string_view& s, size_t& cursor) {
         return {};
     }
     char first {s[cursor++]};
-    if (!isalpha(first) && !issymbol(first)) {
+    if (!isalpha(first) && !isSymbol(first)) {
         --cursor;
         return {};
     }
@@ -74,7 +74,7 @@ ParserReturns parseAtom(const ::std::string_view& s, size_t& cursor) {
     stringstream rest;
     while (cursor < len) {
         next = s[cursor++];
-        if (!isalpha(next) && !isdigit(next) && !issymbol(next)) {
+        if (!isalpha(next) && !isdigit(next) && !isSymbol(next)) {
             --cursor;
             break;
         }
@@ -331,7 +331,7 @@ static ParserReturns parseHexAux(const ::std::string_view& s, size_t& cursor, ch
               return (Number (fst (readOct rest !! 0)))
  */
 ParserReturns parseOct(const ::std::string_view& s, size_t& cursor) {
-    return parseHexAux(s, cursor, 'o', isodigit);
+    return parseHexAux(s, cursor, 'o', isODigit);
 }
 
 /**
@@ -344,7 +344,7 @@ ParserReturns parseOct(const ::std::string_view& s, size_t& cursor) {
               return (Number (fst (readHex rest !! 0)))
  */
 ParserReturns parseHex(const ::std::string_view& s, size_t& cursor) {
-    return parseHexAux(s, cursor, 'x', isxdigit);
+    return parseHexAux(s, cursor, 'x', isXDigit);
 }
 
 /**
