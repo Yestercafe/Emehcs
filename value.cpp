@@ -3,6 +3,7 @@
 #include <eval.hpp>
 #include <string>
 #include <sstream>
+#include <exception.hpp>
 
 namespace emehcs {
 
@@ -37,6 +38,7 @@ namespace emehcs {
     ::std::stringstream ss;
 
     if (should_prompt_type) {
+        ss << '[';
         switch (type) {
             case LispValType::Atom:
                 ss << "Atom";
@@ -65,32 +67,40 @@ namespace emehcs {
             default:
                 std::terminate();
         }
-        ss << ": ";
+        ss << "]";
     }
 
     switch (type) {
         case LispValType::Atom:
-            return value.get<lv::Atom>().str;
+            ss << value.get<lv::Atom>().str;
+            break;
         case LispValType::List:
-            return show(value.get<lv::List>(), should_prompt_type);
+            ss << show(value.get<lv::List>(), should_prompt_type);
+            break;
         case LispValType::DottedList:
-            return show(value.get<lv::DottedList>(), should_prompt_type);
+            ss << show(value.get<lv::DottedList>(), should_prompt_type);
             break;
         case LispValType::Number:
-            return ::std::to_string(value.get<lv::Number>());
+            ss << ::std::to_string(value.get<lv::Number>());
+            break;
         case LispValType::Char:
             ss << "'" << value.get<lv::Char>() << "'";
-            return ss.str();
+            break;
         case LispValType::String:
             ss << '"' << value.get<lv::String>() << '"';
-            return ss.str();
+            break;
         case LispValType::Bool:
-            return (value.get<lv::Bool>() ? "#t" : "#f");
+            ss << (value.get<lv::Bool>() ? "#t" : "#f");
+            break;
         case LispValType::Function:
-            return "<function>";
+            ss << "<function>";
+            break;
         default:
-            return "<error>";
+            ss << "<error>";
+            break;
     }
+
+    return ss.str();
 }
 
 void print_value(std::ostream& os, const Value& value, bool should_prompt_type) {
@@ -106,9 +116,8 @@ ValueSharedPtr unpackNum(ValueSharedPtr value_ptr) {
         case LispValType::List:
             return eval(value_ptr);
         default:
-            break;
+            throw TypeMismatchException("[TypeMismatchException] Can't unpack as a `Number`", value_ptr);
     }
-    return 0;
 }
 
 ValueSharedPtr unpackStr(ValueSharedPtr value_ptr) {
@@ -122,7 +131,7 @@ ValueSharedPtr unpackStr(ValueSharedPtr value_ptr) {
         case LispValType::List:
             return eval(value_ptr);
         default:
-            return make_shared_value(lv::String("<notStringOrCantConvertToString>"));  // TODO exception
+            throw TypeMismatchException("[TypeMismatchException] Can't unpack as a `String`", value_ptr);
     }
 }
 
@@ -133,7 +142,7 @@ ValueSharedPtr unpackBool(ValueSharedPtr value_ptr) {
         case LispValType::List:
             return eval(value_ptr);
         default:
-            return make_shared_value(false);      // TODO exception
+            throw TypeMismatchException("[TypeMismatchException] Can't unpack as a `Bool`", value_ptr);
     }
 }
 
