@@ -17,7 +17,7 @@ class LispException {
     LispException(string str = "A so-called exception caused by", ValueSharedPtr vsp = nullptr)
         : vsp{vsp}
     {
-        message = str + ": " + (vsp ? show(*vsp) : "<null>");
+        message = str + ": " + (vsp ? show(*vsp, true) : "<null>");
     }
     virtual ~LispException() = default;
     virtual string_view what() const {
@@ -39,7 +39,7 @@ class NumArgsException : public LispException {
         ::std::stringstream ss;
         ss << text_prefix << nArgs << text_suffix;
         if (vsp) {
-            ss << show(*vsp);
+            ss << show(*vsp, true);
         }
         else {
             ss << "<null>";
