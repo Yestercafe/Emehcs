@@ -28,11 +28,11 @@ ValueSharedPtr eval(ValueSharedPtr pValue) {
             return pValue;
         case LispValType::List: {
             if (pValue->get<lv::List>().size() > 0 && pValue->get<lv::List>()[0]->get_type() == LispValType::Atom) {
-                if (pValue->get<lv::List>()[0]->get<lv::Atom>().str == "quote") {
-                    return pValue->get<lv::List>()[1];
+                auto list {pValue->get<lv::List>()};
+                auto func {list[0]->get<lv::Atom>()};
+                if (auto fnd {BuiltInFunctor.find(func.str)}; fnd != BuiltInFunctor.cend()) {
+                    return fnd->second(list);
                 }
-
-                auto func {pValue->get<lv::List>()[0]->get<lv::Atom>()};
 
                 if (pValue->get<lv::List>().size() == 2) {
                     auto fnd = UnaryOps.find(func.str);
@@ -52,11 +52,58 @@ ValueSharedPtr eval(ValueSharedPtr pValue) {
                 throw BadSpecialFormException("[BadSpecialFormException] A empty `List` without quote", pValue);
             }
         }
+        case LispValType::Atom:
+            return pValue;
         default:
             break;
     }
 
     throw BadSpecialFormException("[BadSpecialFormException] Unrecognized special form", pValue);
+}
+
+ValueSharedPtr funcQuote(lv::List& list) {
+    return list[1];
+}
+
+ValueSharedPtr funcIf(lv::List& list) {
+    // (if pred conseq alt)
+    if (list.size() == 4) {
+        auto pred {eval(list[1])};
+        auto conseq {eval(list[2])};
+        auto alt {eval(list[3])};
+        if (unpackBool(pred)->get<lv::Bool>()) {
+            return conseq;
+        }
+        else {
+            return alt;
+        }
+    }
+    else {
+        throw BadSpecialFormException("[BadSpecialFormException] `if` expression should be like (if pred conseq alt)");
+    }
+}
+
+ValueSharedPtr funcCond(lv::List& list) {
+    const auto size = list.size();
+    for (size_t i = 1; i < size; ++i) {
+        auto& elem = list[i];
+        if (elem->get_type() != LispValType::List) {
+            throw BadSpecialFormException("[BadSpecialFormException] A part of `cond` should be like (pred conseq), not", elem);
+        }
+        else if (elem->get<lv::List>().size() != 2) {
+            throw BadSpecialFormException("[BadSpecialFormException] A part of `cond` should be like (pred conseq), not", elem);
+        }
+
+        auto pred {eval(elem->get<lv::List>()[0])};
+        if (pred->get_type() == LispValType::Atom && pred->get<lv::Atom>().str == "else") {
+            pred = make_shared_value(lv::Bool(true));
+        }
+        auto conseq {eval(elem->get<lv::List>()[1])};
+        if (unpackBool(pred)->get<lv::Bool>()) {
+            return conseq;
+        }
+    }
+    throw BadSpecialFormException("[BadSpecialFormException] `cond` cannot finish in all exit", make_shared_value(list));
 }
 
 ValueSharedPtr numericUnopMinus(ValueSharedPtr a) {

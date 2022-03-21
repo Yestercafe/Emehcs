@@ -44,6 +44,16 @@ ValueSharedPtr eval(ValueSharedPtr pValue);
 
 #define EVAL_AB() EVAL_A(); EVAL_B()
 
+ValueSharedPtr funcQuote(lv::List& list);
+ValueSharedPtr funcIf(lv::List& list);
+ValueSharedPtr funcCond(lv::List& list);
+
+const ::std::unordered_map<::std::string, ::std::function<ValueSharedPtr(lv::List&)>> BuiltInFunctor {
+        {"quote", funcQuote},
+        {"if", funcIf},
+        {"cond", funcCond},
+};
+
 ValueSharedPtr numericUnopMinus(ValueSharedPtr a);
 ValueSharedPtr boolBoolUnopNot(ValueSharedPtr a);
 ValueSharedPtr listCar(ValueSharedPtr a);
