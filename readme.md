@@ -1,4 +1,4 @@
-# Emehcs - a Scheme-- compiler
+# Emehcs - a Scheme-- interpreter
 
 Depend on pure C++20 and its STL.
 
