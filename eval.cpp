@@ -2,6 +2,7 @@
 #include <debug.hpp>
 #include <exception.hpp>
 #include <defs.hpp>
+#include <environment.hpp>
 
 namespace emehcs {
 
@@ -34,16 +35,34 @@ ValueSharedPtr eval(ValueSharedPtr pValue) {
                     return fnd->second(list);
                 }
 
-                if (pValue->get<lv::List>().size() == 2) {
+                {
                     auto fnd = UnaryOps.find(func.str);
                     if (fnd != UnaryOps.cend()) {
-                        return fnd->second(pValue->get<lv::List>()[1]);
+                        if (list.size() != 2) {
+                            throw NumArgsException(1, list.front());
+                        }
+                        return fnd->second(list[1]);
                     }
                 }
-                auto fnd{BinaryOps.find(func.str)};
-                if (fnd != BinaryOps.cend()) {
-                    return fold(fnd->second, pValue);
+                {
+                    auto fnd = BinaryOps.find(func.str);
+                    if (fnd != BinaryOps.cend()) {
+                        if (list.size() != 3) {
+                            throw NumArgsException(2, list.front());
+                        }
+                        return fnd->second(list[1], list[2]);
+                    }
                 }
+                {
+                    auto fnd{FoldOps.find(func.str)};
+                    if (fnd != FoldOps.cend()) {
+                        if (list.size() < 3) {
+                            throw NumArgsException(2, list.front(), true);
+                        }
+                        return fold(fnd->second, pValue);
+                    }
+                }
+
             }
             if (pValue->get<lv::List>().size() > 0) {
                 throw NotFunctionException("[NotFunctionException] Head of a `List` is not a function/functor", pValue->get<lv::List>()[0]);
@@ -52,8 +71,18 @@ ValueSharedPtr eval(ValueSharedPtr pValue) {
                 throw BadSpecialFormException("[BadSpecialFormException] A empty `List` without quote", pValue);
             }
         }
-        case LispValType::Atom:
-            return pValue;
+        case LispValType::Atom: {
+            if (Keywords.contains(pValue->get<lv::Atom>().str)) {
+                return pValue;
+            }
+            auto var = global_context.get(pValue->get<lv::Atom>().str);
+            if (var) {
+                return var;
+            }
+            else {
+                throw IdentifierException("[IdentifierException] Unknown identifier");
+            }
+        }
         default:
             break;
     }
@@ -103,7 +132,27 @@ ValueSharedPtr funcCond(lv::List& list) {
             return conseq;
         }
     }
-    throw BadSpecialFormException("[BadSpecialFormException] `cond` cannot finish in all exit", make_shared_value(list));
+    throw BadSpecialFormException("[BadSpecialFormException] `cond` cannot finish in all exit");
+}
+
+ValueSharedPtr funcDefine(lv::List& list) {
+    if (list.size() != 3) {
+        throw BadSpecialFormException("[BadSpecialFormException] `define` expression should be like (define ident value)");
+    }
+
+    auto ident {list[1]};
+    auto value {eval(list[2])};
+
+    if (ident->get_type() != LispValType::Atom) {
+        throw BadSpecialFormException("[BadSpecialFormException] `define` expression should be like (define ident value), ident should be an Atom, but it's", ident);
+    }
+    if (global_context.contains(ident->get<lv::Atom>().str)) {
+        throw IdentifierException("[IdentifierException] Duplicated identifier");
+    }
+
+    global_context.put(ident->get<lv::Atom>().str, value);
+
+    return value;
 }
 
 ValueSharedPtr numericUnopMinus(ValueSharedPtr a) {
@@ -340,5 +389,6 @@ ValueSharedPtr eqv(ValueSharedPtr a, ValueSharedPtr b) {
     EVAL_AB();
     return eqv_aux(a, b);
 }
+
 
 }

@@ -5,6 +5,7 @@
 #include <string>
 #include <exception.hpp>
 #include <fstream>
+#include <environment.hpp>
 
 void test1() {
     using namespace emehcs;
@@ -29,10 +30,12 @@ int repl() {
     size_t cnt {0u};
 
     while (::std::getline(::std::cin, line)) {
+        if (line == "quit" || line == "exit")
+            break;
         try {
             size_t cursor {0u};
             auto result {::emehcs::eval(::emehcs::parseExpr(line, cursor))};
-            ::std::cout << "eval[" << cnt << "]: " << *result << ::std::endl;
+            ::std::cout << "eval[" << cnt++ << "]: " << *result << ::std::endl;
         }
         catch (::emehcs::LispException& e) {
             ::std::cout << e.what() << '\n';
@@ -62,6 +65,10 @@ int readFromFile(char* filename) {
 
 int main(int argc, char* argv[])
 {
+    using namespace ::emehcs;
+    ::emehcs::initGlobalContext();
+
+
     if (argc == 1) {
         return repl();
     }

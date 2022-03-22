@@ -5,5 +5,6 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_definitions(-D__EMEHCS_DEBUG=1)
 
-add_executable(emehcs main.cpp value.cpp parser.cpp defs.cpp eval.cpp)
+add_executable(emehcs main.cpp value.cpp defs.cpp parser.cpp environment.cpp
+        eval.cpp details/scm-string.cpp)
 target_include_directories(emehcs PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

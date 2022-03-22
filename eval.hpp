@@ -6,6 +6,7 @@
 #include <value.hpp>
 #include <parser.hpp>
 
+
 namespace emehcs {
 
 ValueSharedPtr eval(ValueSharedPtr pValue);
@@ -20,6 +21,12 @@ ValueSharedPtr eval(ValueSharedPtr pValue);
     do {                                           \
         if ((b = unpack##TYPE(b)) == nullptr)      \
             return nullptr;                        \
+    } while (false)
+
+#define UNPACK(WHO, TYPE)                              \
+    do {                                               \
+        if ((WHO = unpack##TYPE(WHO)) == nullptr)      \
+            return nullptr;                            \
     } while (false)
 
 #define UNPACK_AB(TYPE) UNPACK_A(TYPE); UNPACK_B(TYPE)
@@ -47,11 +54,13 @@ ValueSharedPtr eval(ValueSharedPtr pValue);
 ValueSharedPtr funcQuote(lv::List& list);
 ValueSharedPtr funcIf(lv::List& list);
 ValueSharedPtr funcCond(lv::List& list);
+ValueSharedPtr funcDefine(lv::List& list);
 
-const ::std::unordered_map<::std::string, ::std::function<ValueSharedPtr(lv::List&)>> BuiltInFunctor {
-        {"quote", funcQuote},
-        {"if", funcIf},
-        {"cond", funcCond},
+const ::std::unordered_map<::std::string, ::std::function<ValueSharedPtr(lv::List&)>> BuiltInFunctor{
+        {"quote",  funcQuote},
+        {"if",     funcIf},
+        {"cond",   funcCond},
+        {"define", funcDefine},
 };
 
 ValueSharedPtr numericUnopMinus(ValueSharedPtr a);
@@ -80,30 +89,27 @@ ValueSharedPtr strBoolBinopG(ValueSharedPtr a, ValueSharedPtr b);
 ValueSharedPtr strBoolBinopGe(ValueSharedPtr a, ValueSharedPtr b);
 ValueSharedPtr listCons(ValueSharedPtr a, ValueSharedPtr b);
 ValueSharedPtr eqv(ValueSharedPtr a, ValueSharedPtr b);
+}
 
-const ::std::unordered_map<std::string, ::std::function<ValueSharedPtr(ValueSharedPtr)>> UnaryOps {
-        {"-", numericUnopMinus},
+#include <details/scm-string.ipp>
+
+namespace emehcs
+{
+const ::std::unordered_map<::std::string,
+                           ::std::function<ValueSharedPtr(ValueSharedPtr)>> UnaryOps {
+        {"-0", numericUnopMinus},
         {"!", boolBoolUnopNot},
         {"car", listCar},
         {"cdr", listCdr},
 };
 
-const ::std::unordered_map<std::string, ::std::function<ValueSharedPtr(ValueSharedPtr, ValueSharedPtr)>> BinaryOps {
-        {"+", numericBinopPlus},
-        {"-", numericBinopMinus},
-        {"*", numericBinopTimes},
-        {"/", numericBinopDivide},
-        {"mod", numericBinopMod},
-        {"quotient", numericBinopQuot},
-        {"remainder", numericBinopRem},
+const ::std::unordered_map<::std::string, ::std::function<ValueSharedPtr(ValueSharedPtr, ValueSharedPtr)>> BinaryOps {
         {"=", numBoolBinopEq},
         {"<", numBoolBinopL},
         {"<=", numBoolBinopLe},
         {">", numBoolBinopG},
         {">=", numBoolBinopGe},
         {"/=", numBoolBinopNeq},
-        {"&&", boolBoolBinopAnd},
-        {"||", boolBoolBinopOr},
         {"string=?", strBoolBinopEq},
         {"string<?", strBoolBinopL},
         {"string<=?", strBoolBinopLe},
@@ -112,6 +118,26 @@ const ::std::unordered_map<std::string, ::std::function<ValueSharedPtr(ValueShar
         {"cons", listCons},
         {"eq?", eqv},
         {"eqv?", eqv},
+        {"make-string", strMakeString},
+};
+
+const ::std::unordered_map<::std::string,
+                           ::std::function<ValueSharedPtr(ValueSharedPtr, ValueSharedPtr)>> FoldOps {
+        {"+", numericBinopPlus},
+        {"-", numericBinopMinus},
+        {"*", numericBinopTimes},
+        {"/", numericBinopDivide},
+        {"mod", numericBinopMod},
+        {"quotient", numericBinopQuot},
+        {"remainder", numericBinopRem},
+        {"&&", boolBoolBinopAnd},
+        {"||", boolBoolBinopOr},
+        {"string-append", strStringAppend}
+};
+
+const ::std::unordered_map<::std::string,
+                           ::std::function<ValueSharedPtr(ValueSharedPtr, ValueSharedPtr, ValueSharedPtr)>> TernaryOps {
+        {"substring", strSubstring},
 };
 
 }

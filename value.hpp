@@ -98,6 +98,7 @@ void print_value(std::ostream& os, const emehcs::Value& value, bool = false);
 ValueSharedPtr unpackNum(ValueSharedPtr value_ptr);
 ValueSharedPtr unpackStr(ValueSharedPtr value_ptr);
 ValueSharedPtr unpackBool(ValueSharedPtr value_ptr);
+ValueSharedPtr unpackChar(ValueSharedPtr value_ptr);
 
 }
 
