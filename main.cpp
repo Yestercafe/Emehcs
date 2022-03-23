@@ -7,22 +7,6 @@
 #include <fstream>
 #include <environment.hpp>
 
-void test1() {
-    using namespace emehcs;
-
-    lv::List list;
-    list.emplace_back(::std::make_shared<Value>(lv::Number(1)));
-    list.emplace_back(::std::make_shared<Value>(lv::String("hello")));
-    list.emplace_back(::std::make_shared<Value>(lv::Bool(true)));
-
-    lv::DottedList dotted_list;
-    dotted_list.first = lv::List(1, make_shared_value(lv::Number(2)));
-    dotted_list.second = ::std::make_shared<Value>(lv::Bool(false));
-    list.emplace_back(::std::make_shared<Value>(::std::move(dotted_list)));
-
-    ::std::cout << list << ::std::endl;
-}
-
 int repl() {
     ::std::string line;
     ::std::cout << ">>> ";
