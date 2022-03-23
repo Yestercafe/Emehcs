@@ -2,8 +2,8 @@
 
 Depend on pure C++20 and its STL.
 
-- C++17 for structured bind
-- C++20 for `contains` of `::std::unordered_set`
+- C++17 for `std::varient`, fold expression, structured bind, initializers for `if`, and etc.
+- C++20 for `contains` of `std::unordered_set`
 
 ## how to compile
 

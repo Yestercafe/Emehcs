@@ -11,24 +11,39 @@ namespace emehcs {
 
 class Environment;
 
-extern Environment global_context;
+extern ::std::shared_ptr<Environment> global_context;
 extern ::std::unordered_set<::std::string> Keywords;
 
 class Environment {
   public:
-    Environment() = default;
+    Environment() {
+        super_env = nullptr;
+    }
     // ::std::unordered_map default behavior is deep-copying
-    Environment(const Environment& rhs) = default;
+    Environment(Environment& rhs) {
+        super_env = &rhs;
+    }
 
     bool contains(::std::string ident) {
-        return env.contains(ident);
+        bool ret {false};
+        auto i {this};
+
+        while (i) {
+            ret |= i->env.contains(ident);
+            if (ret) {
+                break;
+            }
+            i = i->super_env;
+        }
+
+        return ret;
     }
 
     bool put(::std::string ident, ValueSharedPtr vsp) {
         if (Keywords.contains(ident)) {
             return false;
         }
-        if (!contains(ident)) {
+        if (!env.contains(ident)) {
             env.emplace(ident, vsp);
             return true;
         }
@@ -36,26 +51,40 @@ class Environment {
     }
 
     bool update(::std::string ident, ValueSharedPtr vsp) {
-        if (contains(ident)) {
-            env[ident] = vsp;
-            return true;
+        bool ret {false};
+        auto i {this};
+
+        while (i) {
+            ret |= i->contains(ident);
+            if (ret) {
+                i->env[ident] = vsp;
+                break;
+            }
+            i = i->super_env;
         }
-        return false;
+
+        return ret;
     }
 
     ValueSharedPtr get(::std::string ident) {
-        if (contains(ident)) {
-            return env[ident];
+        auto i {this};
+
+        while (i) {
+            if (i->env.contains(ident)) {
+                return i->env[ident];
+            }
+            i = i->super_env;
         }
+
         return nullptr;
     }
 
   private:
     ::std::unordered_map<::std::string, ValueSharedPtr> env;
+    Environment* super_env;
 };
 
 void initGlobalContext();
-
 
 }
 

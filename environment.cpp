@@ -1,12 +1,15 @@
 #include <environment.hpp>
 #include <eval.hpp>
+#include <memory>
 
 namespace emehcs {
 
-Environment global_context;
+::std::shared_ptr<Environment> global_context;
 ::std::unordered_set<::std::string> Keywords;
 
 void initGlobalContext() {
+    global_context = ::std::make_shared<Environment>();
+
     for (auto& [ident, _] : BuiltInFunctor) {
         Keywords.insert(ident);
     }

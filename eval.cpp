@@ -75,7 +75,7 @@ ValueSharedPtr eval(ValueSharedPtr pValue) {
             if (Keywords.contains(pValue->get<lv::Atom>().str)) {
                 return pValue;
             }
-            auto var = global_context.get(pValue->get<lv::Atom>().str);
+            auto var = global_context->get(pValue->get<lv::Atom>().str);
             if (var) {
                 return var;
             }
@@ -146,11 +146,11 @@ ValueSharedPtr funcDefine(lv::List& list) {
     if (ident->get_type() != LispValType::Atom) {
         throw BadSpecialFormException("[BadSpecialFormException] `define` expression should be like (define ident value), ident should be an Atom, but it's", ident);
     }
-    if (global_context.contains(ident->get<lv::Atom>().str)) {
+    if (global_context->contains(ident->get<lv::Atom>().str)) {
         throw IdentifierException("[IdentifierException] Duplicated identifier");
     }
 
-    global_context.put(ident->get<lv::Atom>().str, value);
+    global_context->put(ident->get<lv::Atom>().str, value);
 
     return value;
 }

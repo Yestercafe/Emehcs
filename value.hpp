@@ -9,6 +9,7 @@
 #include <variant>
 #include <iostream>
 #include <functional>
+#include <environment.hpp>
 
 namespace emehcs {
 
@@ -40,7 +41,12 @@ using Number       = ::std::int64_t;
 using Char         = char;
 using String       = ::std::string;
 using Bool         = bool;
-using Function     = void*;         // TODO
+struct Function {
+    ::std::deque<::std::string> params;
+    ::std::shared_ptr<::std::string> vararg;
+    ::std::deque<ValueSharedPtr> body;
+    ::std::shared_ptr<Environment> closure;
+};
 
 }
 
