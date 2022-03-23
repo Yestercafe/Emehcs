@@ -107,26 +107,6 @@ void print_value(std::ostream& os, const Value& value, bool should_prompt_type) 
     os << show(value, false);
 }
 
-ValueSharedPtr unpackNum(ValueSharedPtr value_ptr) {
-    switch (value_ptr->get_type()) {
-        case LispValType::Number:
-            return value_ptr;
-        case LispValType::String:
-            return make_shared_value(::std::stoll(value_ptr->get<lv::String>()));
-        case LispValType::List:
-            return eval(value_ptr);
-        case LispValType::Atom: {
-            auto var {eval(value_ptr)};
-            if (var && var->get_type() == LispValType::Atom) {
-                throw TypeMismatchException("[TypeMismatchException] Can't unpack as a `Number`", value_ptr);
-            }
-            return var;
-        }
-        default:
-            throw TypeMismatchException("[TypeMismatchException] Can't unpack as a `Number`", value_ptr);
-    }
-}
-
 }
 
 std::ostream& operator<<(std::ostream& os, const emehcs::lv::List& rhs) {
