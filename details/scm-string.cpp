@@ -5,8 +5,8 @@
 namespace emehcs {
 
 ValueSharedPtr strMakeString(ValueSharedPtr a, ValueSharedPtr b) {
-    UNPACK_A(Num);
-    UNPACK_B(Char);
+    CHECK_TYPE(a, Number);
+    CHECK_TYPE(b, Char);
 
     lv::Number a_num {a->get<lv::Number>()};
     lv::Char b_char {b->get<lv::Char>()};
@@ -16,16 +16,16 @@ ValueSharedPtr strMakeString(ValueSharedPtr a, ValueSharedPtr b) {
 }
 
 ValueSharedPtr strStringAppend(ValueSharedPtr a, ValueSharedPtr b) {
-    UNPACK_A(Str);
-    UNPACK_B(Str);
+    CHECK_TYPE(a, String);
+    CHECK_TYPE(b, String);
 
     return make_shared_value(a->get<lv::String>() + b->get<lv::String>());
 }
 
 ValueSharedPtr strSubstring(ValueSharedPtr a, ValueSharedPtr b, ValueSharedPtr c) {
-    UNPACK_A(Str);
-    UNPACK_B(Num);
-    UNPACK(c, Num);
+    CHECK_TYPE(a, String);
+    CHECK_TYPE(b, Number);
+    CHECK_TYPE(c, Number);
 
     return make_shared_value(a->get<lv::String>().substr(b->get<lv::Number>(), b->get<lv::Number>()));
 }

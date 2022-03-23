@@ -381,7 +381,11 @@ ValueSharedPtr parseList(const ::std::string_view& s, size_t& cursor) {
     bool isDottedList {false};
     skipSpaces(s, cursor);
     while (true) {
-        auto token {parseExpr(s, cursor)};
+        ValueSharedPtr token {nullptr};
+        try {
+            token = parseExpr(s, cursor);
+        }
+        catch (LispException& e) {}
 
         if (token == nullptr) {
             // there are (4) conditions when parseExpr failed:

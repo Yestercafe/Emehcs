@@ -127,67 +127,6 @@ ValueSharedPtr unpackNum(ValueSharedPtr value_ptr) {
     }
 }
 
-ValueSharedPtr unpackStr(ValueSharedPtr value_ptr) {
-    switch (value_ptr->get_type()) {
-        case LispValType::String:
-            return value_ptr;
-        case LispValType::Number:
-            return make_shared_value(show(*value_ptr));
-        case LispValType::Bool:
-            return make_shared_value(show(*value_ptr));
-        case LispValType::List:
-            return eval(value_ptr);
-        case LispValType::Atom: {
-            auto var {eval(value_ptr)};
-            if (var && var->get_type() == LispValType::Atom) {
-                throw TypeMismatchException("[TypeMismatchException] Can't unpack as a `String`", value_ptr);
-            }
-            return var;
-        }
-        default:
-            throw TypeMismatchException("[TypeMismatchException] Can't unpack as a `String`", value_ptr);
-    }
-}
-
-ValueSharedPtr unpackBool(ValueSharedPtr value_ptr) {
-    switch (value_ptr->get_type()) {
-        case LispValType::Bool:
-            return value_ptr;
-        case LispValType::List:
-            return eval(value_ptr);
-        case LispValType::Atom: {
-            auto var {eval(value_ptr)};
-            if (var && var->get_type() == LispValType::Atom) {
-                throw TypeMismatchException("[TypeMismatchException] Can't unpack as a `Bool`", value_ptr);
-            }
-            return var;
-        }
-        default:
-            throw TypeMismatchException("[TypeMismatchException] Can't unpack as a `Bool`", value_ptr);
-    }
-}
-
-ValueSharedPtr unpackChar(ValueSharedPtr value_ptr) {
-    switch (value_ptr->get_type()) {
-        case LispValType::Char:
-            return value_ptr;
-        case LispValType::String:
-            if (value_ptr->get<lv::String>().length() != 1) {
-                throw TypeMismatchException("[TypeMismatchException] Can't unpack as a `Char`", value_ptr);
-            }
-            return make_shared_value(value_ptr->get<lv::String>().front());
-        case LispValType::Atom: {
-            auto var {eval(value_ptr)};
-            if (var && var->get_type() == LispValType::Atom) {
-                throw TypeMismatchException("[TypeMismatchException] Can't unpack as a `Char`", value_ptr);
-            }
-            return var;
-        }
-        default:
-            throw TypeMismatchException("[TypeMismatchException] Can't unpack as a `Char`", value_ptr);
-    }
-}
-
 }
 
 std::ostream& operator<<(std::ostream& os, const emehcs::lv::List& rhs) {

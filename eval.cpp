@@ -100,7 +100,8 @@ ValueSharedPtr funcIf(lv::List& list) {
         auto pred {eval(list[1])};
         auto conseq {eval(list[2])};
         auto alt {eval(list[3])};
-        if (unpackBool(pred)->get<lv::Bool>()) {
+        CHECK_TYPE(pred, Bool);
+        if (pred->get<lv::Bool>()) {
             return conseq;
         }
         else {
@@ -128,7 +129,8 @@ ValueSharedPtr funcCond(lv::List& list) {
             pred = make_shared_value(lv::Bool(true));
         }
         auto conseq {eval(elem->get<lv::List>()[1])};
-        if (unpackBool(pred)->get<lv::Bool>()) {
+        CHECK_TYPE(pred, Bool);
+        if (pred->get<lv::Bool>()) {
             return conseq;
         }
     }
@@ -156,16 +158,17 @@ ValueSharedPtr funcDefine(lv::List& list) {
 }
 
 ValueSharedPtr numericUnopMinus(ValueSharedPtr a) {
-    UNPACK_A(Num);
+    CHECK_TYPE(a, Number);
     return make_shared_value(-a->get<lv::Number>());
 }
 
 ValueSharedPtr boolBoolUnopNot(ValueSharedPtr a) {
-    UNPACK_A(Bool);
+    CHECK_TYPE(a, Number);
     return make_shared_value(!a->get<lv::Bool>());
 }
 
 ValueSharedPtr listCar(ValueSharedPtr a) {
+    CHECK_TYPE(a, List);
     EVAL_A();
     switch (a->get_type()) {
         case LispValType::List:
@@ -178,6 +181,7 @@ ValueSharedPtr listCar(ValueSharedPtr a) {
 }
 
 ValueSharedPtr listCdr(ValueSharedPtr a) {
+    CHECK_TYPE(a, List);
     EVAL_A();
     switch (a->get_type()) {
         case LispValType::List: {
@@ -199,27 +203,32 @@ ValueSharedPtr listCdr(ValueSharedPtr a) {
 }
 
 ValueSharedPtr numericBinopPlus(ValueSharedPtr a, ValueSharedPtr b) {
-    UNPACK_AB(Num);
+    CHECK_TYPE(a, Number);
+    CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() + b->get<lv::Number>());
 }
 
 ValueSharedPtr numericBinopMinus(ValueSharedPtr a, ValueSharedPtr b) {
-    UNPACK_AB(Num);
+    CHECK_TYPE(a, Number);
+    CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() - b->get<lv::Number>());
 }
 
 ValueSharedPtr numericBinopTimes(ValueSharedPtr a, ValueSharedPtr b) {
-    UNPACK_AB(Num);
+    CHECK_TYPE(a, Number);
+    CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() * b->get<lv::Number>());
 }
 
 ValueSharedPtr numericBinopDivide(ValueSharedPtr a, ValueSharedPtr b) {
-    UNPACK_AB(Num);
+    CHECK_TYPE(a, Number);
+    CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() / b->get<lv::Number>());
 }
 
 ValueSharedPtr numericBinopMod(ValueSharedPtr a, ValueSharedPtr b) {
-    UNPACK_AB(Num);
+    CHECK_TYPE(a, Number);
+    CHECK_TYPE(b, Number);
     lv::Number aa = a->get<lv::Number>(), bb = b->get<lv::Number>();
     if (bb > 0) {
         return make_shared_value(aa % bb);
@@ -230,77 +239,92 @@ ValueSharedPtr numericBinopMod(ValueSharedPtr a, ValueSharedPtr b) {
 }
 
 ValueSharedPtr numericBinopQuot(ValueSharedPtr a, ValueSharedPtr b) {
-    UNPACK_AB(Num);
+    CHECK_TYPE(a, Number);
+    CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() / b->get<lv::Number>());
 }
 
 ValueSharedPtr numericBinopRem(ValueSharedPtr a, ValueSharedPtr b) {
-    UNPACK_AB(Num);
+    CHECK_TYPE(a, Number);
+    CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() % b->get<lv::Number>());
 }
 
 ValueSharedPtr numBoolBinopEq(ValueSharedPtr a, ValueSharedPtr b) {
-    UNPACK_AB(Num);
+    CHECK_TYPE(a, Number);
+    CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() == b->get<lv::Number>());
 }
 
 ValueSharedPtr numBoolBinopL(ValueSharedPtr a, ValueSharedPtr b) {
-    UNPACK_AB(Num);
+    CHECK_TYPE(a, Number);
+    CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() < b->get<lv::Number>());
 }
 
 ValueSharedPtr numBoolBinopLe(ValueSharedPtr a, ValueSharedPtr b) {
-    UNPACK_AB(Num);
+    CHECK_TYPE(a, Number);
+    CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() <= b->get<lv::Number>());
 }
 
 ValueSharedPtr numBoolBinopG(ValueSharedPtr a, ValueSharedPtr b) {
-    UNPACK_AB(Num);
+    CHECK_TYPE(a, Number);
+    CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() > b->get<lv::Number>());
 }
 
 ValueSharedPtr numBoolBinopGe(ValueSharedPtr a, ValueSharedPtr b) {
-    UNPACK_AB(Num);
+    CHECK_TYPE(a, Number);
+    CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() >= b->get<lv::Number>());
 }
 
 ValueSharedPtr numBoolBinopNeq(ValueSharedPtr a, ValueSharedPtr b) {
-    UNPACK_AB(Num);
+    CHECK_TYPE(a, Number);
+    CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() != b->get<lv::Number>());
 }
 
 ValueSharedPtr boolBoolBinopAnd(ValueSharedPtr a, ValueSharedPtr b) {
-    UNPACK_AB(Bool);
+    CHECK_TYPE(a, Bool);
+    CHECK_TYPE(b, Bool);
     return make_shared_value(a->get<lv::Bool>() && b->get<lv::Bool>());
 }
 
 ValueSharedPtr boolBoolBinopOr(ValueSharedPtr a, ValueSharedPtr b) {
-    UNPACK_AB(Bool);
+    CHECK_TYPE(a, Bool);
+    CHECK_TYPE(b, Bool);
     return make_shared_value(a->get<lv::Bool>() || b->get<lv::Bool>());
 }
 
 ValueSharedPtr strBoolBinopEq(ValueSharedPtr a, ValueSharedPtr b) {
-    UNPACK_AB(Str);
+    CHECK_TYPE(a, String);
+    CHECK_TYPE(b, String);
     return make_shared_value(a->get<lv::String>() == b->get<lv::String>());
 }
 
 ValueSharedPtr strBoolBinopL(ValueSharedPtr a, ValueSharedPtr b) {
-    UNPACK_AB(Str);
+    CHECK_TYPE(a, String);
+    CHECK_TYPE(b, String);
     return make_shared_value(a->get<lv::String>() < b->get<lv::String>());
 }
 
 ValueSharedPtr strBoolBinopLe(ValueSharedPtr a, ValueSharedPtr b) {
-    UNPACK_AB(Str);
+    CHECK_TYPE(a, String);
+    CHECK_TYPE(b, String);
     return make_shared_value(a->get<lv::String>() <= b->get<lv::String>());
 }
 
 ValueSharedPtr strBoolBinopG(ValueSharedPtr a, ValueSharedPtr b) {
-    UNPACK_AB(Str);
+    CHECK_TYPE(a, String);
+    CHECK_TYPE(b, String);
     return make_shared_value(a->get<lv::String>() > b->get<lv::String>());
 }
 
 ValueSharedPtr strBoolBinopGe(ValueSharedPtr a, ValueSharedPtr b) {
-    UNPACK_AB(Str);
+    CHECK_TYPE(a, String);
+    CHECK_TYPE(b, String);
     return make_shared_value(a->get<lv::String>() >= b->get<lv::String>());
 }
 

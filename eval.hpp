@@ -5,31 +5,19 @@
 #include <memory>
 #include <value.hpp>
 #include <parser.hpp>
-
+#include <exception.hpp>
 
 namespace emehcs {
 
 ValueSharedPtr eval(ValueSharedPtr pValue);
 
-#define UNPACK_A(TYPE)                             \
-    do {                                           \
-        if ((a = unpack##TYPE(a)) == nullptr)      \
-            return nullptr;                        \
+#define CHECK_TYPE(WHO, TYPE)                                                                           \
+    WHO = eval(WHO);                                                                                    \
+    do {                                                                                                \
+        if (WHO->get_type() != LispValType::TYPE) {                                                     \
+            throw TypeMismatchException("[TypeMismatchException] Should be a `" #TYPE "` but is", WHO); \
+        }                                                                                               \
     } while (false)
-
-#define UNPACK_B(TYPE)                             \
-    do {                                           \
-        if ((b = unpack##TYPE(b)) == nullptr)      \
-            return nullptr;                        \
-    } while (false)
-
-#define UNPACK(WHO, TYPE)                              \
-    do {                                               \
-        if ((WHO = unpack##TYPE(WHO)) == nullptr)      \
-            return nullptr;                            \
-    } while (false)
-
-#define UNPACK_AB(TYPE) UNPACK_A(TYPE); UNPACK_B(TYPE)
 
 #define EVAL_A()                                                     \
     do {                                                             \

@@ -30,12 +30,14 @@ int repl() {
     size_t cnt {0u};
 
     while (::std::getline(::std::cin, line)) {
-        if (line == "quit" || line == "exit")
+        if (line == "(quit)" || line == "(exit)")
             break;
         try {
             size_t cursor {0u};
-            auto result {::emehcs::eval(::emehcs::parseExpr(line, cursor))};
-            ::std::cout << "eval[" << cnt++ << "]: " << *result << ::std::endl;
+            auto expr {::emehcs::parseExpr(line, cursor)};
+            auto result {::emehcs::eval(expr)};
+            ::std::cout << "eval[" << cnt << "]: " << *result << ::std::endl;
+            ++cnt;
         }
         catch (::emehcs::LispException& e) {
             ::std::cout << e.what() << '\n';
