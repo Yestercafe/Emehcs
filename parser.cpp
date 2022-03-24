@@ -26,8 +26,8 @@ bool skipSpaces(const ::std::string_view& s, size_t& cursor) {
        <|> parseString
        <|> parseAtom
  */
-ValueSharedPtr parseExpr(const ::std::string_view& s, size_t& cursor) {
-    ValueSharedPtr expr;
+ValueP parseExpr(const ::std::string_view& s, size_t& cursor) {
+    ValueP expr;
 
     bool canParse {
             (expr = parseNumber(s, cursor))
@@ -57,7 +57,7 @@ ValueSharedPtr parseExpr(const ::std::string_view& s, size_t& cursor) {
                          "#f" -> Bool False
                          otherwise -> Atom atom
  */
-ValueSharedPtr parseAtom(const ::std::string_view& s, size_t& cursor) {
+ValueP parseAtom(const ::std::string_view& s, size_t& cursor) {
     using ::std::stringstream;
     using ::std::isalpha;
     using ::std::isdigit;
@@ -113,7 +113,7 @@ ValueSharedPtr parseAtom(const ::std::string_view& s, size_t& cursor) {
               return $ Char c   (deprecated)
            use "#\?" instead
  */
-ValueSharedPtr parseChar(const ::std::string_view& s, size_t& cursor) {
+ValueP parseChar(const ::std::string_view& s, size_t& cursor) {
     using ::std::stringstream;
 
     const auto len {s.length()};
@@ -162,7 +162,7 @@ ValueSharedPtr parseChar(const ::std::string_view& s, size_t& cursor) {
               char '"'
               return $ String x
  */
-ValueSharedPtr parseString(const ::std::string_view& s, size_t& cursor) {
+ValueP parseString(const ::std::string_view& s, size_t& cursor) {
     using ::std::stringstream;
 
     const auto len {s.length()};
@@ -218,8 +218,8 @@ ValueSharedPtr parseString(const ::std::string_view& s, size_t& cursor) {
        <|> try parseOct
        <|> try parseHex
  */
-ValueSharedPtr parseNumber(const ::std::string_view& s, size_t& cursor) {
-    ValueSharedPtr expr;
+ValueP parseNumber(const ::std::string_view& s, size_t& cursor) {
+    ValueP expr;
 
     bool _ {
             (expr = parseDec(s, cursor))
@@ -237,7 +237,7 @@ ValueSharedPtr parseNumber(const ::std::string_view& s, size_t& cursor) {
  * @return do n <- many1 digit
               return (Number (read n))
  */
-ValueSharedPtr parseDec(const ::std::string_view& s, size_t& cursor) {
+ValueP parseDec(const ::std::string_view& s, size_t& cursor) {
     using ::std::stringstream;
     using ::std::isdigit;
 
@@ -267,7 +267,7 @@ ValueSharedPtr parseDec(const ::std::string_view& s, size_t& cursor) {
 }
 
 template<typename Pred>
-static ValueSharedPtr parseHexAux(const ::std::string_view& s, size_t& cursor, char flag, Pred& pred) {
+static ValueP parseHexAux(const ::std::string_view& s, size_t& cursor, char flag, Pred& pred) {
     using ::std::stringstream;
 
     const auto len {s.length()};
@@ -322,7 +322,7 @@ static ValueSharedPtr parseHexAux(const ::std::string_view& s, size_t& cursor, c
               rest <- many1 octDigit
               return (Number (fst (readOct rest !! 0)))
  */
-ValueSharedPtr parseOct(const ::std::string_view& s, size_t& cursor) {
+ValueP parseOct(const ::std::string_view& s, size_t& cursor) {
     return parseHexAux(s, cursor, 'o', isODigit);
 }
 
@@ -335,7 +335,7 @@ ValueSharedPtr parseOct(const ::std::string_view& s, size_t& cursor) {
               rest <- many1 hexDigit
               return (Number (fst (readHex rest !! 0)))
  */
-ValueSharedPtr parseHex(const ::std::string_view& s, size_t& cursor) {
+ValueP parseHex(const ::std::string_view& s, size_t& cursor) {
     return parseHexAux(s, cursor, 'x', isXDigit);
 }
 
@@ -345,8 +345,8 @@ ValueSharedPtr parseHex(const ::std::string_view& s, size_t& cursor) {
  * @param cursor
  * @return
  */
-ValueSharedPtr parseAnyList(const ::std::string_view& s, size_t& cursor) {
-    ValueSharedPtr expr {nullptr};
+ValueP parseAnyList(const ::std::string_view& s, size_t& cursor) {
+    ValueP expr {nullptr};
     const auto origin_cursor = cursor;
 
     if (s[cursor] == '(') {
@@ -374,14 +374,14 @@ ValueSharedPtr parseAnyList(const ::std::string_view& s, size_t& cursor) {
  * @param cursor
  * @return liftM List $ sepBy parseExpr spaces
  */
-ValueSharedPtr parseList(const ::std::string_view& s, size_t& cursor) {
+ValueP parseList(const ::std::string_view& s, size_t& cursor) {
     const auto origin_cursor {cursor};
     lv::List list;
-    ValueSharedPtr tail {nullptr};
+    ValueP tail {nullptr};
     bool isDottedList {false};
     skipSpaces(s, cursor);
     while (true) {
-        ValueSharedPtr token {nullptr};
+        ValueP token {nullptr};
         try {
             token = parseExpr(s, cursor);
         }
@@ -469,7 +469,7 @@ ValueSharedPtr parseList(const ::std::string_view& s, size_t& cursor) {
     tail <- char '.' >> spaces >> parseExpr
     return $ DottedList head tail
  */
-[[deprecated]] ValueSharedPtr parseDottedList(const ::std::string_view& s, size_t& cursor) {
+[[deprecated]] ValueP parseDottedList(const ::std::string_view& s, size_t& cursor) {
     using ::std::pair;
     using ::std::shared_ptr;
 
@@ -514,7 +514,7 @@ ValueSharedPtr parseList(const ::std::string_view& s, size_t& cursor) {
     x <- parseExpr
     return $ List [Atom "quote", x]
  */
-ValueSharedPtr parseQuoted(const ::std::string_view& s, size_t& cursor) {
+ValueP parseQuoted(const ::std::string_view& s, size_t& cursor) {
     using ::std::stringstream;
 
     const auto len {s.length()};

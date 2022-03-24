@@ -43,9 +43,12 @@ using String       = ::std::string;
 using Bool         = bool;
 struct Function {
     ::std::deque<::std::string> params;
-    ::std::shared_ptr<::std::string> vararg;
-    ::std::deque<ValueSharedPtr> body;
-    ::std::shared_ptr<Environment> closure;
+    ::std::deque<ValueP> body;
+    Function() = delete;
+    Function(const Function&) = default;
+    Function(::std::deque<::std::string>  params, const ::std::deque<ValueP>& body)
+        : params{std::move(params)}, body{body}
+    { }
 };
 
 }
@@ -98,6 +101,7 @@ class Value {
 ::std::string show(const lv::List& list, bool = false);
 ::std::string show(const lv::DottedList& dotted_list, bool = false);
 ::std::string show(const Value& value, bool = false);
+::std::string show(const lv::Function& func, bool = false);
 
 void print_value(std::ostream& os, const emehcs::Value& value, bool = false);
 

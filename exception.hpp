@@ -14,10 +14,10 @@ using ::std::string_view;
 
 class LispException {
   public:
-    LispException(string str = "[Exception] A so-called exception caused by", ValueSharedPtr vsp = nullptr)
-        : vsp{vsp}
+    LispException(string str = "[Exception] A so-called exception caused by", ValueP pValue = nullptr)
+        : pValue{pValue}
     {
-        message = str + ": " + (vsp ? show(*vsp, true) : "<null>");
+        message = str + ": " + (pValue ? show(*pValue, true) : "<null>");
     }
     virtual ~LispException() = default;
     virtual string_view what() const {
@@ -26,28 +26,32 @@ class LispException {
 
   protected:
     string message;
-    ValueSharedPtr vsp;
+    ValueP pValue;
 };
 
 class NumArgsException : public LispException {
     static constexpr string_view text_prefix {"[NumArgsException] Excepted "};
-    static constexpr string_view text_suffix {" arg(s): "};
+    static constexpr string_view text_suffix {" arg(s)"};
     static constexpr string_view at_least {"at least "};
   public:
-    NumArgsException(int nArgs, ValueSharedPtr vsp = nullptr, bool showAtLeast = false)
+    NumArgsException(int nArgs, ValueP pValue = nullptr, bool showAtLeast = false)
         : nArgs{nArgs}
     {
         ::std::stringstream ss;
         ss << text_prefix << (showAtLeast ? at_least : "") << nArgs << text_suffix;
-        if (vsp) {
-            ss << show(*vsp, true);
+        if (pValue) {
+            ss << ": found values";
+            const auto len {pValue->get<lv::List>().size()};
+            for (size_t i {1}; i < len; ++i) {
+                ss << " " << *pValue->get<lv::List>()[i];
+            }
         }
         else {
             ss << "<null>";
         }
 
         LispException::message = ss.str();
-        LispException::vsp = vsp;
+        LispException::pValue = pValue;
     }
 
   private:
@@ -56,8 +60,8 @@ class NumArgsException : public LispException {
 
 class TypeMismatchException : public LispException {
   public:
-    TypeMismatchException(string str = "[TypeMismatch] Caused by", ValueSharedPtr vsp = nullptr)
-        : LispException(str, vsp)
+    TypeMismatchException(string str = "[TypeMismatch] Caused by", ValueP pValue = nullptr)
+        : LispException(str, pValue)
     { }
 };
 
@@ -71,33 +75,33 @@ class ParserError : public LispException {
 
 class BadSpecialFormException : public LispException {
   public:
-    BadSpecialFormException(string str = "[BadSpecialFormException] Caused by", ValueSharedPtr vsp = nullptr)
-        : LispException(str, vsp)
+    BadSpecialFormException(string str = "[BadSpecialFormException] Caused by", ValueP pValue = nullptr)
+        : LispException(str, pValue)
     {
-//        if (vsp == nullptr) {
-//            message = str;
-//        }
+        if (pValue == nullptr) {
+            message = str;
+        }
     }
 };
 
 class NotFunctionException : public LispException {
   public:
-    NotFunctionException(string str = "[NotFunctionException] Caused by", ValueSharedPtr vsp = nullptr)
-        : LispException(str, vsp)
+    NotFunctionException(string str = "[NotFunctionException] Caused by", ValueP pValue = nullptr)
+        : LispException(str, pValue)
     { }
 };
 
 class UnboundVarException : public LispException {
   public:
-    UnboundVarException (string str = "[UnboundVarException] Caused by", ValueSharedPtr vsp = nullptr)
-        : LispException(str, vsp)
+    UnboundVarException (string str = "[UnboundVarException] Caused by", ValueP pValue = nullptr)
+        : LispException(str, pValue)
     { }
 };
 
 class IdentifierException : public LispException {
   public:
-    IdentifierException (string str = "[IdentifierException] Caused by", ValueSharedPtr vsp = nullptr)
-            : LispException(str, vsp)
+    IdentifierException (string str = "[IdentifierException] Caused by", ValueP pValue = nullptr)
+            : LispException(str, pValue)
     { }
 };
 

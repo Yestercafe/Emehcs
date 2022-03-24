@@ -3,25 +3,27 @@
 #include <exception.hpp>
 #include <defs.hpp>
 #include <environment.hpp>
+#include <algorithm>
+#include <iterator>
 
 namespace emehcs {
 
 template<typename NumericBinop>
-static ValueSharedPtr fold_aux(NumericBinop op, ValueSharedPtr list, ValueSharedPtr res, size_t p) {
+static ValueP fold_aux(NumericBinop op, ValueP list, ValueP res, size_t p, EnvironmentP env) {
     if (p >= list->get<lv::List>().size()) {
         return res;
     }
-    res = op(res, list->get<lv::List>()[p]);
-    return fold_aux(op, list, res, p + 1);
+    res = op(res, list->get<lv::List>()[p], env);
+    return fold_aux(op, list, res, p + 1, env);
 }
 
 template<typename NumericBinop>
-static ValueSharedPtr fold(NumericBinop op, ValueSharedPtr list) {
-    ValueSharedPtr res = op(list->get<lv::List>()[1], list->get<lv::List>()[2]);
-    return fold_aux(op, list, res, 3);
+static ValueP fold(NumericBinop op, ValueP list, EnvironmentP env) {
+    ValueP res = op(list->get<lv::List>()[1], list->get<lv::List>()[2], env);
+    return fold_aux(op, list, res, 3, env);
 }
 
-ValueSharedPtr eval(ValueSharedPtr pValue) {
+ValueP eval(ValueP pValue, EnvironmentP env) {
     switch (pValue->get_type()) {
         case LispValType::String:
         case LispValType::Number:
@@ -32,40 +34,59 @@ ValueSharedPtr eval(ValueSharedPtr pValue) {
                 auto list {pValue->get<lv::List>()};
                 auto func {list[0]->get<lv::Atom>()};
                 if (auto fnd {BuiltInFunctor.find(func.str)}; fnd != BuiltInFunctor.cend()) {
-                    return fnd->second(list);
+                    return fnd->second(pValue, env);
                 }
 
                 {
                     auto fnd = UnaryOps.find(func.str);
                     if (fnd != UnaryOps.cend()) {
                         if (list.size() != 2) {
-                            throw NumArgsException(1, list.front());
+                            throw NumArgsException(1, pValue);
                         }
-                        return fnd->second(list[1]);
+                        return fnd->second(list[1], env);
                     }
                 }
                 {
                     auto fnd = BinaryOps.find(func.str);
                     if (fnd != BinaryOps.cend()) {
                         if (list.size() != 3) {
-                            throw NumArgsException(2, list.front());
+                            throw NumArgsException(2, pValue);
                         }
-                        return fnd->second(list[1], list[2]);
+                        return fnd->second(list[1], list[2], env);
+                    }
+                }
+                {
+                    auto fnd = TernaryOps.find(func.str);
+                    if (fnd != TernaryOps.cend()) {
+                        if (list.size() != 4) {
+                            throw NumArgsException(3, pValue);
+                        }
+                        return fnd->second(list[1], list[2], list[3], env);
                     }
                 }
                 {
                     auto fnd{FoldOps.find(func.str)};
                     if (fnd != FoldOps.cend()) {
                         if (list.size() < 3) {
-                            throw NumArgsException(2, list.front(), true);
+                            throw NumArgsException(2, pValue, true);
                         }
-                        return fold(fnd->second, pValue);
+                        return fold(fnd->second, pValue, env);
                     }
                 }
-
+                {
+                    auto functor {env->get(func.str)};
+                    if (functor && functor->get_type() == LispValType::Function) {
+                        auto& function {functor->get<lv::Function>()};
+                        const auto param_list_len {function.params.size()};
+                        if (list.size() != param_list_len) {
+                            throw NumArgsException(param_list_len - 1, pValue);
+                        }
+                        return apply(function, pValue, env);
+                    }
+                }
             }
             if (pValue->get<lv::List>().size() > 0) {
-                throw NotFunctionException("[NotFunctionException] Head of a `List` is not a function/functor", pValue->get<lv::List>()[0]);
+                throw NotFunctionException("[NotFunctionException] Head of a `List` is not a function", pValue->get<lv::List>()[0]);
             }
             else {
                 throw BadSpecialFormException("[BadSpecialFormException] A empty `List` without quote", pValue);
@@ -75,12 +96,12 @@ ValueSharedPtr eval(ValueSharedPtr pValue) {
             if (Keywords.contains(pValue->get<lv::Atom>().str)) {
                 return pValue;
             }
-            auto var = global_context->get(pValue->get<lv::Atom>().str);
+            auto var = env->get(pValue->get<lv::Atom>().str);
             if (var) {
                 return var;
             }
             else {
-                throw IdentifierException("[IdentifierException] Unknown identifier");
+                throw IdentifierException("[IdentifierException] Unknown identifier", pValue);
             }
         }
         default:
@@ -90,22 +111,37 @@ ValueSharedPtr eval(ValueSharedPtr pValue) {
     throw BadSpecialFormException("[BadSpecialFormException] Unrecognized special form", pValue);
 }
 
-ValueSharedPtr funcQuote(lv::List& list) {
-    return list[1];
+ValueP apply(const lv::Function& func, ValueP actual, EnvironmentP super_env) {
+    EnvironmentP closure {::std::make_shared<Environment>(super_env)};
+    auto actual_param_list {actual->get<lv::List>()};
+    for (size_t i {1}; i < actual_param_list.size(); ++i) {
+        closure->put(func.params[i], eval(actual_param_list[i], super_env));
+    }
+
+    for (size_t i {}; i < func.body.size() - 1; ++i) {
+        ::std::cout << *func.body[i] << ::std::endl;
+        eval(func.body[i], closure);
+    }
+    return eval(func.body.back(), closure);
 }
 
-ValueSharedPtr funcIf(lv::List& list) {
+ValueP funcQuote(ValueP pValue, EnvironmentP env) {
+    return pValue->get<lv::List>()[1];
+}
+
+ValueP funcIf(ValueP pValue, EnvironmentP env) {
+    auto list {pValue->get<lv::List>()};
     // (if pred conseq alt)
     if (list.size() == 4) {
-        auto pred {eval(list[1])};
-        auto conseq {eval(list[2])};
-        auto alt {eval(list[3])};
+        auto pred {eval(list[1], env)};
+        auto conseq {list[2]};
+        auto alt {list[3]};
         CHECK_TYPE(pred, Bool);
         if (pred->get<lv::Bool>()) {
-            return conseq;
+            return eval(conseq, env);
         }
         else {
-            return alt;
+            return eval(alt, env);
         }
     }
     else {
@@ -113,61 +149,108 @@ ValueSharedPtr funcIf(lv::List& list) {
     }
 }
 
-ValueSharedPtr funcCond(lv::List& list) {
+ValueP funcCond(ValueP pValue, EnvironmentP env) {
+    auto list {pValue->get<lv::List>()};
     const auto size = list.size();
-    for (size_t i = 1; i < size; ++i) {
+    for (size_t i {1}; i < size; ++i) {
         auto& elem = list[i];
         if (elem->get_type() != LispValType::List) {
-            throw BadSpecialFormException("[BadSpecialFormException] A part of `cond` should be like (pred conseq), not", elem);
+            throw BadSpecialFormException(
+                    "[BadSpecialFormException] A part of `cond` should be like (pred conseq), not", elem);
         }
         else if (elem->get<lv::List>().size() != 2) {
-            throw BadSpecialFormException("[BadSpecialFormException] A part of `cond` should be like (pred conseq), not", elem);
+            throw BadSpecialFormException(
+                    "[BadSpecialFormException] A part of `cond` should be like (pred conseq), not", elem);
         }
 
-        auto pred {eval(elem->get<lv::List>()[0])};
+        auto pred {eval(elem->get<lv::List>()[0], env)};
         if (pred->get_type() == LispValType::Atom && pred->get<lv::Atom>().str == "else") {
             pred = make_shared_value(lv::Bool(true));
         }
-        auto conseq {eval(elem->get<lv::List>()[1])};
+        auto conseq {elem->get<lv::List>()[1]};
         CHECK_TYPE(pred, Bool);
         if (pred->get<lv::Bool>()) {
-            return conseq;
+            return eval(conseq, env);
         }
     }
     throw BadSpecialFormException("[BadSpecialFormException] `cond` cannot finish in all exit");
 }
 
-ValueSharedPtr funcDefine(lv::List& list) {
-    if (list.size() != 3) {
-        throw BadSpecialFormException("[BadSpecialFormException] `define` expression should be like (define ident value)");
-    }
-
+ValueP funcDefine(ValueP pValue, EnvironmentP env) {
+    auto list {pValue->get<lv::List>()};
     auto ident {list[1]};
-    auto value {eval(list[2])};
+    if (ident->get_type() == LispValType::Atom) {
+        if (list.size() != 3) {
+            throw BadSpecialFormException(
+                    "[BadSpecialFormException] `define` expression to define a variable should be like (define ident value), but it is",
+                    pValue);
+        }
 
-    if (ident->get_type() != LispValType::Atom) {
-        throw BadSpecialFormException("[BadSpecialFormException] `define` expression should be like (define ident value), ident should be an Atom, but it's", ident);
+        if (env->contains(ident->get<lv::Atom>().str)) {
+            throw IdentifierException("[IdentifierException] Duplicated identifier or keyword", ident);
+        }
+
+        auto value{eval(list[2], env)};
+        env->put(ident->get<lv::Atom>().str, value);
+
+        return value;
     }
-    if (global_context->contains(ident->get<lv::Atom>().str)) {
-        throw IdentifierException("[IdentifierException] Duplicated identifier");
+    else if (ident->get_type() == LispValType::List) {
+        auto name_param_list {ident->get<lv::List>()};
+
+        auto func_name_vp {name_param_list[0]};
+        if (func_name_vp->get_type() != LispValType::Atom) {
+            throw BadSpecialFormException(
+                    "[BadSpecialFormException] `define` expression to define a function should be like (define ([Atom]name params...) [body]), but it is",
+                    ident);
+        }
+        auto func_name {func_name_vp->get<lv::Atom>().str};
+        if (env->contains(func_name)) {
+            throw IdentifierException("[IdentifierException] Duplicated identifier or keyword", func_name_vp);
+        }
+
+        ::std::deque<::std::string> params;
+        ::std::unordered_set<::std::string> check_dup;
+        for (size_t i {0}; i < name_param_list.size(); ++i) {
+            auto& param_vp {name_param_list[i]};
+            if (param_vp->get_type() != LispValType::Atom) {
+                throw BadSpecialFormException(
+                        "[BadSpecialFormException] Param list in function definition should be like (name [Atom]params...), but it is",
+                        ident);
+            }
+            auto param_name {param_vp->get<lv::Atom>().str};
+            if (!check_dup.contains(param_name)) {
+                check_dup.insert(param_name);
+            }
+            else {
+                throw IdentifierException("[IdentifierException] Identifiers cannot be duplicated in a closure, caused by", param_vp);
+            }
+            params.push_back(::std::move(param_name));
+        }
+
+        ::std::deque<ValueP> func_body;
+        ::std::copy(list.cbegin() + 2, list.cend(), ::std::back_inserter(func_body));
+
+        auto value {make_shared_value(lv::Function(params, func_body))};
+        env->put(func_name, value);
+
+        return value;
     }
 
-    global_context->put(ident->get<lv::Atom>().str, value);
-
-    return value;
+    throw BadSpecialFormException("[BadSpecialFormException] `define` can only be used to define a variable or a function");
 }
 
-ValueSharedPtr numericUnopMinus(ValueSharedPtr a) {
+ValueP numericUnopMinus(ValueP a, EnvironmentP env) {
     CHECK_TYPE(a, Number);
     return make_shared_value(-a->get<lv::Number>());
 }
 
-ValueSharedPtr boolBoolUnopNot(ValueSharedPtr a) {
+ValueP boolBoolUnopNot(ValueP a, EnvironmentP env) {
     CHECK_TYPE(a, Number);
     return make_shared_value(!a->get<lv::Bool>());
 }
 
-ValueSharedPtr listCar(ValueSharedPtr a) {
+ValueP listCar(ValueP a, EnvironmentP env) {
     CHECK_TYPE(a, List);
     EVAL_A();
     switch (a->get_type()) {
@@ -180,7 +263,7 @@ ValueSharedPtr listCar(ValueSharedPtr a) {
     }
 }
 
-ValueSharedPtr listCdr(ValueSharedPtr a) {
+ValueP listCdr(ValueP a, EnvironmentP env) {
     CHECK_TYPE(a, List);
     EVAL_A();
     switch (a->get_type()) {
@@ -202,31 +285,31 @@ ValueSharedPtr listCdr(ValueSharedPtr a) {
     }
 }
 
-ValueSharedPtr numericBinopPlus(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP numericBinopPlus(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, Number);
     CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() + b->get<lv::Number>());
 }
 
-ValueSharedPtr numericBinopMinus(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP numericBinopMinus(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, Number);
     CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() - b->get<lv::Number>());
 }
 
-ValueSharedPtr numericBinopTimes(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP numericBinopTimes(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, Number);
     CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() * b->get<lv::Number>());
 }
 
-ValueSharedPtr numericBinopDivide(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP numericBinopDivide(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, Number);
     CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() / b->get<lv::Number>());
 }
 
-ValueSharedPtr numericBinopMod(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP numericBinopMod(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, Number);
     CHECK_TYPE(b, Number);
     lv::Number aa = a->get<lv::Number>(), bb = b->get<lv::Number>();
@@ -238,97 +321,97 @@ ValueSharedPtr numericBinopMod(ValueSharedPtr a, ValueSharedPtr b) {
     }
 }
 
-ValueSharedPtr numericBinopQuot(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP numericBinopQuot(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, Number);
     CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() / b->get<lv::Number>());
 }
 
-ValueSharedPtr numericBinopRem(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP numericBinopRem(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, Number);
     CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() % b->get<lv::Number>());
 }
 
-ValueSharedPtr numBoolBinopEq(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP numBoolBinopEq(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, Number);
     CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() == b->get<lv::Number>());
 }
 
-ValueSharedPtr numBoolBinopL(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP numBoolBinopL(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, Number);
     CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() < b->get<lv::Number>());
 }
 
-ValueSharedPtr numBoolBinopLe(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP numBoolBinopLe(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, Number);
     CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() <= b->get<lv::Number>());
 }
 
-ValueSharedPtr numBoolBinopG(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP numBoolBinopG(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, Number);
     CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() > b->get<lv::Number>());
 }
 
-ValueSharedPtr numBoolBinopGe(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP numBoolBinopGe(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, Number);
     CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() >= b->get<lv::Number>());
 }
 
-ValueSharedPtr numBoolBinopNeq(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP numBoolBinopNeq(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, Number);
     CHECK_TYPE(b, Number);
     return make_shared_value(a->get<lv::Number>() != b->get<lv::Number>());
 }
 
-ValueSharedPtr boolBoolBinopAnd(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP boolBoolBinopAnd(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, Bool);
     CHECK_TYPE(b, Bool);
     return make_shared_value(a->get<lv::Bool>() && b->get<lv::Bool>());
 }
 
-ValueSharedPtr boolBoolBinopOr(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP boolBoolBinopOr(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, Bool);
     CHECK_TYPE(b, Bool);
     return make_shared_value(a->get<lv::Bool>() || b->get<lv::Bool>());
 }
 
-ValueSharedPtr strBoolBinopEq(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP strBoolBinopEq(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, String);
     CHECK_TYPE(b, String);
     return make_shared_value(a->get<lv::String>() == b->get<lv::String>());
 }
 
-ValueSharedPtr strBoolBinopL(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP strBoolBinopL(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, String);
     CHECK_TYPE(b, String);
     return make_shared_value(a->get<lv::String>() < b->get<lv::String>());
 }
 
-ValueSharedPtr strBoolBinopLe(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP strBoolBinopLe(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, String);
     CHECK_TYPE(b, String);
     return make_shared_value(a->get<lv::String>() <= b->get<lv::String>());
 }
 
-ValueSharedPtr strBoolBinopG(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP strBoolBinopG(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, String);
     CHECK_TYPE(b, String);
     return make_shared_value(a->get<lv::String>() > b->get<lv::String>());
 }
 
-ValueSharedPtr strBoolBinopGe(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP strBoolBinopGe(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, String);
     CHECK_TYPE(b, String);
     return make_shared_value(a->get<lv::String>() >= b->get<lv::String>());
 }
 
-ValueSharedPtr listCons(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP listCons(ValueP a, ValueP b, EnvironmentP env) {
     EVAL_AB();
     switch (b->get_type()) {
         case LispValType::List:
@@ -356,17 +439,17 @@ ValueSharedPtr listCons(ValueSharedPtr a, ValueSharedPtr b) {
     }
 }
 
-static ValueSharedPtr eqv_aux(ValueSharedPtr, ValueSharedPtr);
+static ValueP eqv_aux(ValueP, ValueP, EnvironmentP);
 
-static ValueSharedPtr eqv_aux(const lv::List& a, const lv::List& b) {
+static ValueP eqv_aux(const lv::List& a, const lv::List& b, EnvironmentP env) {
     bool ret = true;
     if (a.size() != b.size()) {
         ret = false;
     }
     else {
         const auto len = a.size();
-        for (size_t i = 0; i < len; ++i) {
-            if (!eqv_aux(a[i], b[i])->get<lv::Bool>()) {
+        for (size_t i {0}; i < len; ++i) {
+            if (!eqv_aux(a[i], b[i], env)->get<lv::Bool>()) {
                 ret = false;
                 break;
             }
@@ -375,7 +458,7 @@ static ValueSharedPtr eqv_aux(const lv::List& a, const lv::List& b) {
     return make_shared_value(ret);
 }
 
-ValueSharedPtr eqv_aux(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP eqv_aux(ValueP a, ValueP b, EnvironmentP env) {
     bool ret = false;
 
     if (a->get_type() != b->get_type()) {
@@ -395,11 +478,11 @@ ValueSharedPtr eqv_aux(ValueSharedPtr a, ValueSharedPtr b) {
             ret = (a->get<lv::Atom>().str == b->get<lv::Atom>().str);
             break;
         case LispValType::DottedList:
-            ret = boolBoolBinopAnd(eqv_aux(a->get<lv::DottedList>().first, b->get<lv::DottedList>().first),
-                                   eqv_aux(a->get<lv::DottedList>().second, b->get<lv::DottedList>().second))->get<lv::Bool>();
+            ret = boolBoolBinopAnd(eqv_aux(a->get<lv::DottedList>().first, b->get<lv::DottedList>().first, env),
+                                   eqv_aux(a->get<lv::DottedList>().second, b->get<lv::DottedList>().second, env), env)->get<lv::Bool>();
             break;
         case LispValType::List:
-            ret = eqv_aux(a->get<lv::List>(), b->get<lv::List>())->get<lv::Bool>();
+            ret = eqv_aux(a->get<lv::List>(), b->get<lv::List>(), env)->get<lv::Bool>();
             break;
         default:
             ret = false;
@@ -409,10 +492,9 @@ ValueSharedPtr eqv_aux(ValueSharedPtr a, ValueSharedPtr b) {
     return make_shared_value(ret);
 }
 
-ValueSharedPtr eqv(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP eqv(ValueP a, ValueP b, EnvironmentP env) {
     EVAL_AB();
-    return eqv_aux(a, b);
+    return eqv_aux(a, b, env);
 }
-
 
 }

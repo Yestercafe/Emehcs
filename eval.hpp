@@ -9,10 +9,11 @@
 
 namespace emehcs {
 
-ValueSharedPtr eval(ValueSharedPtr pValue);
+ValueP eval(ValueP pValue, EnvironmentP env);
+ValueP apply(const lv::Function& func, ValueP actual, EnvironmentP super_env);
 
 #define CHECK_TYPE(WHO, TYPE)                                                                           \
-    WHO = eval(WHO);                                                                                    \
+    WHO = eval(WHO, env);                                                                               \
     do {                                                                                                \
         if (WHO->get_type() != LispValType::TYPE) {                                                     \
             throw TypeMismatchException("[TypeMismatchException] Should be a `" #TYPE "` but is", WHO); \
@@ -21,7 +22,7 @@ ValueSharedPtr eval(ValueSharedPtr pValue);
 
 #define EVAL_A()                                                     \
     do {                                                             \
-        a = eval(a);                                                 \
+        a = eval(a, env);                                            \
         if (a == nullptr) {                                          \
             ::std::cout << "eval a: can't eval list" << ::std::endl; \
             return nullptr;                                          \
@@ -30,7 +31,7 @@ ValueSharedPtr eval(ValueSharedPtr pValue);
 
 #define EVAL_B()                                                     \
     do {                                                             \
-        b = eval(b);                                                 \
+        b = eval(b, env);                                            \
         if (b == nullptr) {                                          \
             ::std::cout << "eval b: can't eval list" << ::std::endl; \
             return nullptr;                                          \
@@ -39,44 +40,44 @@ ValueSharedPtr eval(ValueSharedPtr pValue);
 
 #define EVAL_AB() EVAL_A(); EVAL_B()
 
-ValueSharedPtr funcQuote(lv::List& list);
-ValueSharedPtr funcIf(lv::List& list);
-ValueSharedPtr funcCond(lv::List& list);
-ValueSharedPtr funcDefine(lv::List& list);
+ValueP funcQuote(ValueP pValue, EnvironmentP env);
+ValueP funcIf(ValueP pValue, EnvironmentP env);
+ValueP funcCond(ValueP pValue, EnvironmentP env);
+ValueP funcDefine(ValueP pValue, EnvironmentP env);
 
-const ::std::unordered_map<::std::string, ::std::function<ValueSharedPtr(lv::List&)>> BuiltInFunctor{
+const ::std::unordered_map<::std::string, ::std::function<ValueP(ValueP, EnvironmentP)>> BuiltInFunctor{
         {"quote",  funcQuote},
         {"if",     funcIf},
         {"cond",   funcCond},
         {"define", funcDefine},
 };
 
-ValueSharedPtr numericUnopMinus(ValueSharedPtr a);
-ValueSharedPtr boolBoolUnopNot(ValueSharedPtr a);
-ValueSharedPtr listCar(ValueSharedPtr a);
-ValueSharedPtr listCdr(ValueSharedPtr a);
-ValueSharedPtr numericBinopPlus(ValueSharedPtr a, ValueSharedPtr b);
-ValueSharedPtr numericBinopMinus(ValueSharedPtr a, ValueSharedPtr b);
-ValueSharedPtr numericBinopTimes(ValueSharedPtr a, ValueSharedPtr b);
-ValueSharedPtr numericBinopDivide(ValueSharedPtr a, ValueSharedPtr b);
-ValueSharedPtr numericBinopMod(ValueSharedPtr a, ValueSharedPtr b);
-ValueSharedPtr numericBinopQuot(ValueSharedPtr a, ValueSharedPtr b);
-ValueSharedPtr numericBinopRem(ValueSharedPtr a, ValueSharedPtr b);
-ValueSharedPtr numBoolBinopEq(ValueSharedPtr a, ValueSharedPtr b);
-ValueSharedPtr numBoolBinopL(ValueSharedPtr a, ValueSharedPtr b);
-ValueSharedPtr numBoolBinopLe(ValueSharedPtr a, ValueSharedPtr b);
-ValueSharedPtr numBoolBinopG(ValueSharedPtr a, ValueSharedPtr b);
-ValueSharedPtr numBoolBinopGe(ValueSharedPtr a, ValueSharedPtr b);
-ValueSharedPtr numBoolBinopNeq(ValueSharedPtr a, ValueSharedPtr b);
-ValueSharedPtr boolBoolBinopAnd(ValueSharedPtr a, ValueSharedPtr b);
-ValueSharedPtr boolBoolBinopOr(ValueSharedPtr a, ValueSharedPtr b);
-ValueSharedPtr strBoolBinopEq(ValueSharedPtr a, ValueSharedPtr b);
-ValueSharedPtr strBoolBinopL(ValueSharedPtr a, ValueSharedPtr b);
-ValueSharedPtr strBoolBinopLe(ValueSharedPtr a, ValueSharedPtr b);
-ValueSharedPtr strBoolBinopG(ValueSharedPtr a, ValueSharedPtr b);
-ValueSharedPtr strBoolBinopGe(ValueSharedPtr a, ValueSharedPtr b);
-ValueSharedPtr listCons(ValueSharedPtr a, ValueSharedPtr b);
-ValueSharedPtr eqv(ValueSharedPtr a, ValueSharedPtr b);
+ValueP numericUnopMinus(ValueP a, EnvironmentP env);
+ValueP boolBoolUnopNot(ValueP a, EnvironmentP env);
+ValueP listCar(ValueP a, EnvironmentP env);
+ValueP listCdr(ValueP a, EnvironmentP env);
+ValueP numericBinopPlus(ValueP a, ValueP b, EnvironmentP env);
+ValueP numericBinopMinus(ValueP a, ValueP b, EnvironmentP env);
+ValueP numericBinopTimes(ValueP a, ValueP b, EnvironmentP env);
+ValueP numericBinopDivide(ValueP a, ValueP b, EnvironmentP env);
+ValueP numericBinopMod(ValueP a, ValueP b, EnvironmentP env);
+ValueP numericBinopQuot(ValueP a, ValueP b, EnvironmentP env);
+ValueP numericBinopRem(ValueP a, ValueP b, EnvironmentP env);
+ValueP numBoolBinopEq(ValueP a, ValueP b, EnvironmentP env);
+ValueP numBoolBinopL(ValueP a, ValueP b, EnvironmentP env);
+ValueP numBoolBinopLe(ValueP a, ValueP b, EnvironmentP env);
+ValueP numBoolBinopG(ValueP a, ValueP b, EnvironmentP env);
+ValueP numBoolBinopGe(ValueP a, ValueP b, EnvironmentP env);
+ValueP numBoolBinopNeq(ValueP a, ValueP b, EnvironmentP env);
+ValueP boolBoolBinopAnd(ValueP a, ValueP b, EnvironmentP env);
+ValueP boolBoolBinopOr(ValueP a, ValueP b, EnvironmentP env);
+ValueP strBoolBinopEq(ValueP a, ValueP b, EnvironmentP env);
+ValueP strBoolBinopL(ValueP a, ValueP b, EnvironmentP env);
+ValueP strBoolBinopLe(ValueP a, ValueP b, EnvironmentP env);
+ValueP strBoolBinopG(ValueP a, ValueP b, EnvironmentP env);
+ValueP strBoolBinopGe(ValueP a, ValueP b, EnvironmentP env);
+ValueP listCons(ValueP a, ValueP b, EnvironmentP env);
+ValueP eqv(ValueP a, ValueP b, EnvironmentP env);
 }
 
 #include <details/scm-string.ipp>
@@ -84,14 +85,14 @@ ValueSharedPtr eqv(ValueSharedPtr a, ValueSharedPtr b);
 namespace emehcs
 {
 const ::std::unordered_map<::std::string,
-                           ::std::function<ValueSharedPtr(ValueSharedPtr)>> UnaryOps {
+                           ::std::function<ValueP(ValueP, EnvironmentP)>> UnaryOps {
         {"-0", numericUnopMinus},
         {"!", boolBoolUnopNot},
         {"car", listCar},
         {"cdr", listCdr},
 };
 
-const ::std::unordered_map<::std::string, ::std::function<ValueSharedPtr(ValueSharedPtr, ValueSharedPtr)>> BinaryOps {
+const ::std::unordered_map<::std::string, ::std::function<ValueP(ValueP, ValueP, EnvironmentP)>> BinaryOps {
         {"=", numBoolBinopEq},
         {"<", numBoolBinopL},
         {"<=", numBoolBinopLe},
@@ -110,7 +111,7 @@ const ::std::unordered_map<::std::string, ::std::function<ValueSharedPtr(ValueSh
 };
 
 const ::std::unordered_map<::std::string,
-                           ::std::function<ValueSharedPtr(ValueSharedPtr, ValueSharedPtr)>> FoldOps {
+                           ::std::function<ValueP(ValueP, ValueP, EnvironmentP)>> FoldOps {
         {"+", numericBinopPlus},
         {"-", numericBinopMinus},
         {"*", numericBinopTimes},
@@ -124,7 +125,7 @@ const ::std::unordered_map<::std::string,
 };
 
 const ::std::unordered_map<::std::string,
-                           ::std::function<ValueSharedPtr(ValueSharedPtr, ValueSharedPtr, ValueSharedPtr)>> TernaryOps {
+                           ::std::function<ValueP(ValueP, ValueP, ValueP, EnvironmentP)>> TernaryOps {
         {"substring", strSubstring},
 };
 

@@ -23,18 +23,18 @@ struct [[deprecated]] ParserReturns {
 };
 
 bool skipSpaces(const ::std::string_view& s, size_t& cursor);
-ValueSharedPtr parseExpr(const ::std::string_view& s, size_t& cursor);
-ValueSharedPtr parseAtom(const ::std::string_view& s, size_t& cursor);
-ValueSharedPtr parseChar(const ::std::string_view& s, size_t& cursor);
-ValueSharedPtr parseString(const ::std::string_view& s, size_t& cursor);
-ValueSharedPtr parseNumber(const ::std::string_view& s, size_t& cursor);
-ValueSharedPtr parseDec(const ::std::string_view& s, size_t& cursor);
-ValueSharedPtr parseOct(const ::std::string_view& s, size_t& cursor);
-ValueSharedPtr parseHex(const ::std::string_view& s, size_t& cursor);
-ValueSharedPtr parseAnyList(const ::std::string_view& s, size_t& cursor);
-ValueSharedPtr parseList(const ::std::string_view& s, size_t& cursor);
-[[deprecated]] ValueSharedPtr parseDottedList(const ::std::string_view& s, size_t& cursor);
-ValueSharedPtr parseQuoted(const ::std::string_view& s, size_t& cursor);
+ValueP parseExpr(const ::std::string_view& s, size_t& cursor);
+ValueP parseAtom(const ::std::string_view& s, size_t& cursor);
+ValueP parseChar(const ::std::string_view& s, size_t& cursor);
+ValueP parseString(const ::std::string_view& s, size_t& cursor);
+ValueP parseNumber(const ::std::string_view& s, size_t& cursor);
+ValueP parseDec(const ::std::string_view& s, size_t& cursor);
+ValueP parseOct(const ::std::string_view& s, size_t& cursor);
+ValueP parseHex(const ::std::string_view& s, size_t& cursor);
+ValueP parseAnyList(const ::std::string_view& s, size_t& cursor);
+ValueP parseList(const ::std::string_view& s, size_t& cursor);
+[[deprecated]] ValueP parseDottedList(const ::std::string_view& s, size_t& cursor);
+ValueP parseQuoted(const ::std::string_view& s, size_t& cursor);
 
 }
 

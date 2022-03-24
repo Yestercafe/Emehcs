@@ -33,6 +33,24 @@ namespace emehcs {
     return ss.str();
 }
 
+::std::string show(const lv::Function& func, bool should_prompt_type) {
+    ::std::stringstream ss;
+    ss << "(lambda (";
+    bool firstIn = true;
+    for (const auto& p : func.params) {
+        if (firstIn) {
+            firstIn = false;
+        }
+        else {
+            ss << ' ';
+        }
+        ss << p;
+    }
+    ss << ") ...)";
+
+    return ss.str();
+}
+
 ::std::string show(const Value& value, bool should_prompt_type) {
     const auto type = value.get_type();
     ::std::stringstream ss;
@@ -65,7 +83,8 @@ namespace emehcs {
                 ss << "Function";
                 break;
             default:
-                std::terminate();
+                ss << "Null";
+                break;
         }
         ss << "]";
     }
@@ -93,7 +112,7 @@ namespace emehcs {
             ss << (value.get<lv::Bool>() ? "#t" : "#f");
             break;
         case LispValType::Function:
-            ss << "<function>";
+            ss << show(value.get<lv::Function>(), should_prompt_type);
             break;
         default:
             ss << "<error>";

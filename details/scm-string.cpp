@@ -4,7 +4,7 @@
 
 namespace emehcs {
 
-ValueSharedPtr strMakeString(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP strMakeString(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, Number);
     CHECK_TYPE(b, Char);
 
@@ -15,14 +15,14 @@ ValueSharedPtr strMakeString(ValueSharedPtr a, ValueSharedPtr b) {
     return make_shared_value(ret);
 }
 
-ValueSharedPtr strStringAppend(ValueSharedPtr a, ValueSharedPtr b) {
+ValueP strStringAppend(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, String);
     CHECK_TYPE(b, String);
 
     return make_shared_value(a->get<lv::String>() + b->get<lv::String>());
 }
 
-ValueSharedPtr strSubstring(ValueSharedPtr a, ValueSharedPtr b, ValueSharedPtr c) {
+ValueP strSubstring(ValueP a, ValueP b, ValueP c, EnvironmentP env) {
     CHECK_TYPE(a, String);
     CHECK_TYPE(b, Number);
     CHECK_TYPE(c, Number);

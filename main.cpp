@@ -19,7 +19,7 @@ int repl() {
         try {
             size_t cursor {0u};
             auto expr {::emehcs::parseExpr(line, cursor)};
-            auto result {::emehcs::eval(expr)};
+            auto result {::emehcs::eval(expr, ::emehcs::global_context)};
             ::std::cout << "eval[" << cnt << "]: " << *result << ::std::endl;
             ++cnt;
         }
@@ -32,13 +32,15 @@ int repl() {
 }
 
 int readFromFile(char* filename) {
+    using namespace ::emehcs;
+
     ::std::ifstream ifs(filename, ::std::ios::in);
     ::std::string line;
     while (::std::getline(ifs, line)) {
         try {
             size_t cursor {0u};
             ::std::cout << ">>> " << line << ::std::endl;
-            auto result {::emehcs::eval(::emehcs::parseExpr(line, cursor))};
+            auto result {eval(parseExpr(line, cursor), global_context)};
             ::std::cout << "=> " << *result << ::std::endl;
         }
         catch (::emehcs::LispException& e) {
@@ -59,7 +61,7 @@ int main(int argc, char* argv[])
         return repl();
     }
     else {
-        for (size_t i = 1; i < argc; ++i) {
+        for (size_t i {1}; i < argc; ++i) {
             readFromFile(argv[i]);
         }
     }
