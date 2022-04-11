@@ -5,9 +5,7 @@
 namespace emehcs {
 
 EnvironmentP global_context;
-::std::unordered_set<::std::string> Keywords {
-    "lambda",
-};
+::std::unordered_set<::std::string> Keywords;
 
 void initGlobalContext() {
     global_context = ::std::make_shared<Environment>();

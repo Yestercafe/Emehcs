@@ -44,10 +44,14 @@ using Bool         = bool;
 struct Function {
     ::std::deque<::std::string> params;
     ::std::deque<ValueP> body;
+    EnvironmentP closure;
     Function() = delete;
     Function(const Function&) = default;
     Function(::std::deque<::std::string>  params, const ::std::deque<ValueP>& body)
-        : params{std::move(params)}, body{body}
+        : params{std::move(params)}, body{body}, closure{nullptr}
+    { }
+    Function(::std::deque<::std::string>  params, const ::std::deque<ValueP>& body, EnvironmentP env)
+            : params{std::move(params)}, body{body}, closure{env}
     { }
 };
 
@@ -100,7 +104,6 @@ class Value {
 
 ::std::string show(const lv::List& list, bool = false);
 ::std::string show(const lv::DottedList& dotted_list, bool = false);
-::std::string show(const Value& value, bool = false);
 ::std::string show(const lv::Function& func, bool = false);
 
 void print_value(std::ostream& os, const emehcs::Value& value, bool = false);

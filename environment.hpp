@@ -6,6 +6,8 @@
 #include <string>
 #include <iterator>
 #include <unordered_set>
+#include <value.hpp>
+#include <iostream>
 
 namespace emehcs {
 
@@ -16,13 +18,9 @@ extern ::std::unordered_set<::std::string> Keywords;
 
 class Environment {
   public:
-    Environment() {
-        super_env = nullptr;
-    }
-    // ::std::unordered_map default behavior is deep-copying
-    Environment(EnvironmentP rhs) {
-        super_env = rhs;
-    }
+    Environment(EnvironmentP super_env = nullptr, EnvironmentP closure = nullptr)
+        : super_env{super_env}, closure{closure}
+    { }
 
     bool contains(::std::string ident) {
         if (Keywords.contains(ident)) {
@@ -31,16 +29,23 @@ class Environment {
 
         bool ret {false};
         auto i {this};
-
         while (i) {
             ret |= i->env.contains(ident);
             if (ret) {
-                break;
+                return ret;
             }
+
+            if (i->closure) {
+                ret |= i->closure->contains(ident);
+                if (ret) {
+                   return ret;
+                }
+            }
+
             i = i->super_env.get();
         }
 
-        return ret;
+        return ret;   // always false?
     }
 
     bool put(::std::string ident, ValueP pValue) {
@@ -57,17 +62,24 @@ class Environment {
     bool update(::std::string ident, ValueP pValue) {
         bool ret {false};
         auto i {this};
-
         while (i) {
-            ret |= i->contains(ident);
+            ret |= env.contains(ident);
             if (ret) {
-                i->env[ident] = pValue;
-                break;
+                env[ident] = pValue;
+                return ret;
             }
+
+            if (i->closure) {
+                ret |= closure->update(ident, pValue);
+                if (ret) {
+                    return ret;
+                }
+            }
+
             i = i->super_env.get();
         }
 
-        return ret;
+        return ret;  // always false?
     }
 
     ValueP get(::std::string ident) {
@@ -77,16 +89,34 @@ class Environment {
             if (i->env.contains(ident)) {
                 return i->env[ident];
             }
+
+            if (i->closure) {
+                auto closure_ret {i->closure->get(ident)};
+                if (closure_ret) {
+                    return closure_ret;
+                }
+            }
+
             i = i->super_env.get();
         }
 
         return nullptr;
     }
 
+    ::std::ostream& print(::std::ostream& os) {
+        os << "{";
+        for (auto&& [ident, value] : env) {
+            os << ident << " => " << ::emehcs::show(*value) << ", ";
+        }
+        os << "}";
+        return os;
+    }
+
   private:
   public:
     ::std::unordered_map<::std::string, ValueP> env;
     EnvironmentP super_env;
+    EnvironmentP closure;
 };
 
 void initGlobalContext();

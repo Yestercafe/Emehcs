@@ -37,6 +37,33 @@ ValueP eval(ValueP pValue, EnvironmentP env) {
                     return fnd->second(pValue, env);
                 }
 
+                // lambda expression
+                if (func.str == "lambda") {
+                    if (list.size() < 3) {
+                        throw BadSpecialFormException("[BadSpecialFormException] Unexpected `lambda` syntax, should consist of (lambda params body...), but it is", pValue);
+                    }
+
+                    if (list[1]->get_type() != LispValType::List) {
+                        throw BadSpecialFormException("[BadSpecialFormException] Unexpected `lambda` syntax, should be argument list, but it is", list[1]);
+                    }
+
+                    ::std::deque<::std::string> params(1, "lambda");   // anonymous function named as "lambda"
+                    for (auto&& param : list[1]->get<lv::List>()) {
+                        if (param->get_type() != LispValType::Atom) {
+                            throw BadSpecialFormException("[BadSpecialFormException] Unexpected `lambda` syntax, an argument should an `Atom`, but it is", param);
+                        }
+                        params.push_back(param->get<lv::Atom>().str);
+                    }
+
+                    ::std::deque<ValueP> body;
+                    const auto I {list.size()};
+                    for (int i {2}; i < I; ++i) {
+                        body.push_back(list[i]);
+                    }
+
+                    return make_shared_value(lv::Function(params, body));
+                }
+
                 {
                     auto fnd = UnaryOps.find(func.str);
                     if (fnd != UnaryOps.cend()) {
@@ -75,17 +102,41 @@ ValueP eval(ValueP pValue, EnvironmentP env) {
                 }
                 {
                     auto functor {env->get(func.str)};
-                    if (functor && functor->get_type() == LispValType::Function) {
-                        auto& function {functor->get<lv::Function>()};
-                        const auto param_list_len {function.params.size()};
-                        if (list.size() != param_list_len) {
-                            throw NumArgsException(param_list_len - 1, pValue);
+                    if (functor) {
+                        switch (functor->get_type()) {
+                            case LispValType::Function: {
+                                auto& function{functor->get<lv::Function>()};
+                                const auto param_list_len{function.params.size()};
+                                if (list.size() != param_list_len) {
+                                    throw NumArgsException(param_list_len - 1, pValue);
+                                }
+                                return apply(function, pValue, env);
+                            }
+                            case LispValType::Atom: {
+                                pValue->get<lv::List>().front() = env->get(func.str);
+                                return eval(pValue, env);
+                            }
+                            default:
+                                break;
                         }
-                        return apply(function, pValue, env);
                     }
                 }
             }
+            if (pValue->get<lv::List>().size() > 0 && pValue->get<lv::List>()[0]->get_type() == LispValType::List) {
+                pValue->get<lv::List>()[0] = eval(pValue->get<lv::List>()[0], env);
+                return eval(pValue, env);
+            }
             if (pValue->get<lv::List>().size() > 0) {
+                if (pValue->get<lv::List>()[0]->get_type() == LispValType::Function) {
+                    auto list {pValue->get<lv::List>()};
+                    auto& functor {pValue->get<lv::List>()[0]};
+                    auto& function{functor->get<lv::Function>()};
+                    const auto param_list_len{function.params.size()};
+                    if (list.size() != param_list_len) {
+                        throw NumArgsException(param_list_len - 1, pValue);
+                    }
+                    return apply(function, pValue, env);
+                }
                 throw NotFunctionException("[NotFunctionException] Head of a `List` is not a function", pValue->get<lv::List>()[0]);
             }
             else {
@@ -112,17 +163,27 @@ ValueP eval(ValueP pValue, EnvironmentP env) {
 }
 
 ValueP apply(const lv::Function& func, ValueP actual, EnvironmentP super_env) {
-    EnvironmentP closure {::std::make_shared<Environment>(super_env)};
+    EnvironmentP local_env;
+    if (func.closure) {
+        local_env = ::std::make_shared<Environment>(super_env, func.closure);
+    }
+    else {
+        local_env = ::std::make_shared<Environment>(super_env);
+    }
+
     auto actual_param_list {actual->get<lv::List>()};
     for (size_t i {1}; i < actual_param_list.size(); ++i) {
-        closure->put(func.params[i], eval(actual_param_list[i], super_env));
+        local_env->put(func.params[i], eval(actual_param_list[i], super_env));
     }
 
     for (size_t i {}; i < func.body.size() - 1; ++i) {
-        ::std::cout << *func.body[i] << ::std::endl;
-        eval(func.body[i], closure);
+        eval(func.body[i], local_env);
     }
-    return eval(func.body.back(), closure);
+    auto ret {eval(func.body.back(), local_env)};
+    if (ret->get_type() == LispValType::Function) {  // if return a function should bind closure
+        ret->get<lv::Function>().closure = local_env;
+    }
+    return ret;
 }
 
 ValueP funcQuote(ValueP pValue, EnvironmentP env) {
@@ -246,7 +307,7 @@ ValueP numericUnopMinus(ValueP a, EnvironmentP env) {
 }
 
 ValueP boolBoolUnopNot(ValueP a, EnvironmentP env) {
-    CHECK_TYPE(a, Number);
+    CHECK_TYPE(a, Bool);
     return make_shared_value(!a->get<lv::Bool>());
 }
 

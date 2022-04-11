@@ -35,7 +35,7 @@ namespace emehcs {
 
 ::std::string show(const lv::Function& func, bool should_prompt_type) {
     ::std::stringstream ss;
-    ss << "(lambda (";
+    ss << "(function (";
     bool firstIn = true;
     for (const auto& p : func.params) {
         if (firstIn) {

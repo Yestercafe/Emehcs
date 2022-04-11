@@ -18,6 +18,8 @@ auto make_shared_value(const T& t) {
     return ::std::make_shared<Value>(t);
 }
 
+::std::string show(const Value& value, bool = false);
+
 }
 
 #endif //EMECHS_EMEHCS_HPP

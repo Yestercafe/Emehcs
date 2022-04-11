@@ -87,7 +87,7 @@ namespace emehcs
 const ::std::unordered_map<::std::string,
                            ::std::function<ValueP(ValueP, EnvironmentP)>> UnaryOps {
         {"-0", numericUnopMinus},
-        {"!", boolBoolUnopNot},
+        {"not", boolBoolUnopNot},
         {"car", listCar},
         {"cdr", listCdr},
 };
