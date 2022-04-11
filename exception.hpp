@@ -105,6 +105,8 @@ class IdentifierException : public LispException {
     { }
 };
 
+class OpenFileFailure : public ::std::exception {};
+
 }
 
 #endif //EMEHCS_EXCEPTIONS_HPP

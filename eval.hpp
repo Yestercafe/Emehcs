@@ -78,6 +78,7 @@ ValueP strBoolBinopG(ValueP a, ValueP b, EnvironmentP env);
 ValueP strBoolBinopGe(ValueP a, ValueP b, EnvironmentP env);
 ValueP listCons(ValueP a, ValueP b, EnvironmentP env);
 ValueP eqv(ValueP a, ValueP b, EnvironmentP env);
+ValueP loadFromFile(ValueP a, EnvironmentP env);
 }
 
 #include <details/scm-string.ipp>
@@ -90,6 +91,7 @@ const ::std::unordered_map<::std::string,
         {"not", boolBoolUnopNot},
         {"car", listCar},
         {"cdr", listCdr},
+        {"load", loadFromFile},
 };
 
 const ::std::unordered_map<::std::string, ::std::function<ValueP(ValueP, ValueP, EnvironmentP)>> BinaryOps {

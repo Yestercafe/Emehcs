@@ -5,6 +5,8 @@
 #include <environment.hpp>
 #include <algorithm>
 #include <iterator>
+#include <fstream>
+#include <stack>
 
 namespace emehcs {
 
@@ -556,6 +558,81 @@ ValueP eqv_aux(ValueP a, ValueP b, EnvironmentP env) {
 ValueP eqv(ValueP a, ValueP b, EnvironmentP env) {
     EVAL_AB();
     return eqv_aux(a, b, env);
+}
+
+ValueP loadFromFile(ValueP a, EnvironmentP env) {
+    CHECK_TYPE(a, String);
+    static ::std::unordered_map<char, char> pairs_sign {
+        {'(', ')'}, {'[', ']'}, {'{', '}'}, {'\"', '\"'},
+    };
+
+    auto filename {a->get<lv::String>()};
+    size_t line_number = 0;
+    ::std::string line;
+    EnvironmentP old_env {::std::make_shared<Environment>(*env)};  // copy the surface layer
+    try {
+        ::std::ifstream ifs(filename, ::std::ios::in);
+        if (!ifs.is_open()) {
+            throw OpenFileFailure();
+        }
+        ::std::string expr;
+        std::stack<char> sign_stack;
+        while (::std::getline(ifs, line)) {
+            ++line_number;
+            for (auto&& ch: line) {
+                if (pairs_sign.find(ch) != pairs_sign.end()) {
+                    sign_stack.push(ch);
+                }
+                else {
+                    switch (ch) {
+                        case ')': case ']': case '}': case '"':
+                            if (pairs_sign[sign_stack.top()] == ch) {
+                                sign_stack.pop();
+                            }
+                            else {
+                                throw ParserError("[ParserError] Error signs paired");
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            if (!expr.empty()) {
+                expr += "\n\t";
+            }
+            expr += line;
+
+            if (!sign_stack.empty()) {
+                continue;
+            }
+
+            while (::std::isspace(expr.back())) {
+                expr.pop_back();
+            }
+            if (expr.empty()) {
+                continue;
+            }
+
+            size_t cursor{0u};
+            eval(parseExpr(expr, cursor), global_context);
+
+            expr.clear();
+        }
+    }
+    catch (OpenFileFailure& e) {
+        ::std::cout << "Can't open file `" << filename << "` correctly" << ::std::endl;
+        return make_shared_value(lv::Bool(false));
+    }
+    catch (LispException& e) {
+        ::std::cout << "Trap at Line " << line_number << " in source file " << filename << ", " << ::std::endl;
+        ::std::cout << "which is `" << line << "`" << ::std::endl;
+        ::std::cout << e.what() << '\n';
+        *env = *old_env;  // recovery status
+        return make_shared_value(lv::Bool(false));
+    }
+
+    return make_shared_value(lv::Bool(true));
 }
 
 }
