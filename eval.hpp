@@ -79,6 +79,7 @@ ValueP strBoolBinopGe(ValueP a, ValueP b, EnvironmentP env);
 ValueP listCons(ValueP a, ValueP b, EnvironmentP env);
 ValueP eqv(ValueP a, ValueP b, EnvironmentP env);
 ValueP loadFromFile(ValueP a, EnvironmentP env);
+ValueP EqAssert(ValueP a, ValueP b, EnvironmentP env);
 }
 
 #include <details/scm-string.ipp>
@@ -110,6 +111,7 @@ const ::std::unordered_map<::std::string, ::std::function<ValueP(ValueP, ValueP,
         {"eq?", eqv},
         {"eqv?", eqv},
         {"make-string", strMakeString},
+        {"assert", EqAssert},
 };
 
 const ::std::unordered_map<::std::string,

@@ -635,4 +635,13 @@ ValueP loadFromFile(ValueP a, EnvironmentP env) {
     return make_shared_value(lv::Bool(true));
 }
 
+ValueP EqAssert(ValueP a, ValueP b, EnvironmentP env) {
+    auto ret = eqv(a, b, env);
+    if (!ret->get<lv::Bool>()) {
+        ::std::cerr << "Assertion failed! " << *a << " /= " << *b << ::std::endl;
+        ::std::exit(-1);
+    }
+    return ret;
+}
+
 }

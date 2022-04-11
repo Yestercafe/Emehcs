@@ -1,7 +1,7 @@
 - [x] make ParseReturns simple
 - [x] disable `unpack*` functions
 - [x] load from file
-- [ ] assert
+- [x] assert
 - [ ] libs
   - [ ] `xxx2xxx` series of functions, casting types
   - [ ] string functions
