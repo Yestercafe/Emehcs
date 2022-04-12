@@ -7,6 +7,9 @@
 #include <iterator>
 #include <fstream>
 #include <stack>
+#include <preload.hpp>
+#include <string_view>
+#include <sstream>
 
 namespace emehcs {
 
@@ -59,7 +62,7 @@ ValueP eval(ValueP pValue, EnvironmentP env) {
 
                     ::std::deque<ValueP> body;
                     const auto I {list.size()};
-                    for (int i {2}; i < I; ++i) {
+                    for (size_t i {2}; i < I; ++i) {
                         body.push_back(list[i]);
                     }
 
@@ -157,6 +160,8 @@ ValueP eval(ValueP pValue, EnvironmentP env) {
                 throw IdentifierException("[IdentifierException] Unknown identifier", pValue);
             }
         }
+        case LispValType::Char:
+            return pValue;
         default:
             break;
     }
@@ -444,35 +449,7 @@ ValueP boolBoolBinopOr(ValueP a, ValueP b, EnvironmentP env) {
     return make_shared_value(a->get<lv::Bool>() || b->get<lv::Bool>());
 }
 
-ValueP strBoolBinopEq(ValueP a, ValueP b, EnvironmentP env) {
-    CHECK_TYPE(a, String);
-    CHECK_TYPE(b, String);
-    return make_shared_value(a->get<lv::String>() == b->get<lv::String>());
-}
 
-ValueP strBoolBinopL(ValueP a, ValueP b, EnvironmentP env) {
-    CHECK_TYPE(a, String);
-    CHECK_TYPE(b, String);
-    return make_shared_value(a->get<lv::String>() < b->get<lv::String>());
-}
-
-ValueP strBoolBinopLe(ValueP a, ValueP b, EnvironmentP env) {
-    CHECK_TYPE(a, String);
-    CHECK_TYPE(b, String);
-    return make_shared_value(a->get<lv::String>() <= b->get<lv::String>());
-}
-
-ValueP strBoolBinopG(ValueP a, ValueP b, EnvironmentP env) {
-    CHECK_TYPE(a, String);
-    CHECK_TYPE(b, String);
-    return make_shared_value(a->get<lv::String>() > b->get<lv::String>());
-}
-
-ValueP strBoolBinopGe(ValueP a, ValueP b, EnvironmentP env) {
-    CHECK_TYPE(a, String);
-    CHECK_TYPE(b, String);
-    return make_shared_value(a->get<lv::String>() >= b->get<lv::String>());
-}
 
 ValueP listCons(ValueP a, ValueP b, EnvironmentP env) {
     EVAL_AB();
@@ -522,17 +499,20 @@ static ValueP eqv_aux(const lv::List& a, const lv::List& b, EnvironmentP env) {
 }
 
 ValueP eqv_aux(ValueP a, ValueP b, EnvironmentP env) {
-    bool ret = false;
+    bool ret = true;
 
     if (a->get_type() != b->get_type()) {
         throw TypeMismatchException("[TypeMismatchException] Can't compare with different types, the second one is");
     }
     switch (a->get_type()) {
         case LispValType::Bool:
-            ret = (a->get<lv::Number>() == b->get<lv::Number>());
+            ret = (a->get<lv::Bool>() == b->get<lv::Bool>());
             break;
         case LispValType::Number:
             ret = (a->get<lv::Number>() == b->get<lv::Number>());
+            break;
+        case LispValType::Char:
+            ret = (a->get<lv::Char>() == b->get<lv::Char>());
             break;
         case LispValType::String:
             ret = (a->get<lv::String>() == b->get<lv::String>());
@@ -547,6 +527,8 @@ ValueP eqv_aux(ValueP a, ValueP b, EnvironmentP env) {
         case LispValType::List:
             ret = eqv_aux(a->get<lv::List>(), b->get<lv::List>(), env)->get<lv::Bool>();
             break;
+        case LispValType::Function:
+            // TODO
         default:
             ret = false;
             break;
@@ -561,10 +543,13 @@ ValueP eqv(ValueP a, ValueP b, EnvironmentP env) {
 }
 
 ValueP loadFromFile(ValueP a, EnvironmentP env) {
+    return loadFromFileWithPrompt(a, env);
+}
+
+ValueP loadFromFileWithPrompt(ValueP a, EnvironmentP env, bool prompt) {
     CHECK_TYPE(a, String);
-    static ::std::unordered_map<char, char> pairs_sign {
-        {'(', ')'}, {'[', ']'}, {'{', '}'}, {'\"', '\"'},
-    };
+
+    bool flagTest = false;
 
     auto filename {a->get<lv::String>()};
     size_t line_number = 0;
@@ -577,15 +562,28 @@ ValueP loadFromFile(ValueP a, EnvironmentP env) {
         }
         ::std::string expr;
         std::stack<char> sign_stack;
+        int quote_counter {0};
         while (::std::getline(ifs, line)) {
             ++line_number;
+            if (line_number == 1) {
+                if (!line.empty() && line.front() == '*') {
+                    line.erase(line.begin());
+                }
+                while (!line.empty() && ::std::isspace(line.front())) {
+                    line.erase(line.begin());
+                }
+                if (line == "test") {
+                    flagTest = true;
+                }
+                continue;
+            }
             for (auto&& ch: line) {
                 if (pairs_sign.find(ch) != pairs_sign.end()) {
                     sign_stack.push(ch);
                 }
                 else {
                     switch (ch) {
-                        case ')': case ']': case '}': case '"':
+                        case ')': case ']': case '}':
                             if (pairs_sign[sign_stack.top()] == ch) {
                                 sign_stack.pop();
                             }
@@ -593,6 +591,8 @@ ValueP loadFromFile(ValueP a, EnvironmentP env) {
                                 throw ParserError("[ParserError] Error signs paired");
                             }
                             break;
+                        case '"':
+                            quote_counter = ~quote_counter;
                         default:
                             break;
                     }
@@ -603,7 +603,7 @@ ValueP loadFromFile(ValueP a, EnvironmentP env) {
             }
             expr += line;
 
-            if (!sign_stack.empty()) {
+            if (!sign_stack.empty() || quote_counter) {
                 continue;
             }
 
@@ -615,7 +615,25 @@ ValueP loadFromFile(ValueP a, EnvironmentP env) {
             }
 
             size_t cursor{0u};
-            eval(parseExpr(expr, cursor), global_context);
+            if (prompt) {
+                ::std::cout << ">>> " << expr << ::std::endl;
+                auto result {eval(parseExpr(expr, cursor), global_context)};
+                ::std::cout << "=> " << *result << ::std::endl;
+            }
+            else if (flagTest) {
+                auto parsed {parseExpr(expr, cursor)};
+                if (parsed->get_type() == LispValType::List) {
+                    auto lst {parsed->get<lv::List>()};
+                    using namespace ::std::literals;
+                    if (!lst.empty() && lst.front()->get_type() == LispValType::Atom && lst.front()->get<lv::Atom>().str.starts_with("assert"sv)) {
+                        ::std::cout << "Test " << expr << ::std::endl;
+                    }
+                }
+                eval(parsed, global_context);
+            }
+            else {
+                eval(parseExpr(expr, cursor), global_context);
+            }
 
             expr.clear();
         }
@@ -630,6 +648,10 @@ ValueP loadFromFile(ValueP a, EnvironmentP env) {
         ::std::cout << e.what() << '\n';
         *env = *old_env;  // recovery status
         return make_shared_value(lv::Bool(false));
+    }
+
+    if (flagTest) {
+        ::std::cout << "All test cases were correct and finished." << ::std::endl;
     }
 
     return make_shared_value(lv::Bool(true));

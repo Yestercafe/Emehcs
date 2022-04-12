@@ -44,14 +44,6 @@ ValueP funcQuote(ValueP pValue, EnvironmentP env);
 ValueP funcIf(ValueP pValue, EnvironmentP env);
 ValueP funcCond(ValueP pValue, EnvironmentP env);
 ValueP funcDefine(ValueP pValue, EnvironmentP env);
-
-const ::std::unordered_map<::std::string, ::std::function<ValueP(ValueP, EnvironmentP)>> BuiltInFunctor{
-        {"quote",  funcQuote},
-        {"if",     funcIf},
-        {"cond",   funcCond},
-        {"define", funcDefine},
-};
-
 ValueP numericUnopMinus(ValueP a, EnvironmentP env);
 ValueP boolBoolUnopNot(ValueP a, EnvironmentP env);
 ValueP listCar(ValueP a, EnvironmentP env);
@@ -71,14 +63,10 @@ ValueP numBoolBinopGe(ValueP a, ValueP b, EnvironmentP env);
 ValueP numBoolBinopNeq(ValueP a, ValueP b, EnvironmentP env);
 ValueP boolBoolBinopAnd(ValueP a, ValueP b, EnvironmentP env);
 ValueP boolBoolBinopOr(ValueP a, ValueP b, EnvironmentP env);
-ValueP strBoolBinopEq(ValueP a, ValueP b, EnvironmentP env);
-ValueP strBoolBinopL(ValueP a, ValueP b, EnvironmentP env);
-ValueP strBoolBinopLe(ValueP a, ValueP b, EnvironmentP env);
-ValueP strBoolBinopG(ValueP a, ValueP b, EnvironmentP env);
-ValueP strBoolBinopGe(ValueP a, ValueP b, EnvironmentP env);
 ValueP listCons(ValueP a, ValueP b, EnvironmentP env);
 ValueP eqv(ValueP a, ValueP b, EnvironmentP env);
 ValueP loadFromFile(ValueP a, EnvironmentP env);
+ValueP loadFromFileWithPrompt(ValueP a, EnvironmentP env, bool prompt = false);
 ValueP EqAssert(ValueP a, ValueP b, EnvironmentP env);
 }
 
@@ -86,6 +74,15 @@ ValueP EqAssert(ValueP a, ValueP b, EnvironmentP env);
 
 namespace emehcs
 {
+
+const ::std::unordered_map<::std::string, ::std::function<ValueP(ValueP, EnvironmentP)>> BuiltInFunctor{
+        {"quote",  funcQuote},
+        {"if",     funcIf},
+        {"cond",   funcCond},
+        {"define", funcDefine},
+        {"string", funcString},
+};
+
 const ::std::unordered_map<::std::string,
                            ::std::function<ValueP(ValueP, EnvironmentP)>> UnaryOps {
         {"-0", numericUnopMinus},
@@ -93,6 +90,25 @@ const ::std::unordered_map<::std::string,
         {"car", listCar},
         {"cdr", listCdr},
         {"load", loadFromFile},
+        {"list->string", strList2String},
+        {"string->list", strString2List},
+        {"string-copy", strStringCopy},
+        {"string?", strIsString},
+        {"string-length", strStringLength},
+        {"string-null?", strIsStringNull},
+        {"string-hash", strStringHash},
+        {"string-capitalized?", strIsStringCapitalized},
+        {"string-upper-case?", strIsStringUpperCase},
+        {"string-lower-case?", strIsStringLowerCase},
+        {"string-capitalize", strStringCapitalize},
+        {"string-capitalize!", strStringCapitalizeBang},
+        {"string-downcase", strStringDowncase},
+        {"string-downcase!", strStringDowncaseBang},
+        {"string-upcase", strStringUpcase},
+        {"string-upcase!", strStringUpcaseBang},
+        {"string-trim", strStringTrim},
+        {"string-trim-left", strStringTrimLeft},
+        {"string-trim-right", strStringTrimRight},
 };
 
 const ::std::unordered_map<::std::string, ::std::function<ValueP(ValueP, ValueP, EnvironmentP)>> BinaryOps {
@@ -112,6 +128,15 @@ const ::std::unordered_map<::std::string, ::std::function<ValueP(ValueP, ValueP,
         {"eqv?", eqv},
         {"make-string", strMakeString},
         {"assert", EqAssert},
+        {"string-ref", strStringRef},
+        {"string-head", strStringHead},
+        {"string-tail", strStringTail},
+        {"string-pad-left", strStringPadLeft},
+        {"string-pad-right", strStringPadRight},
+        {"substring?", strIsSubstring},
+        {"string-prefix?", strIsStringPrefix},
+        {"string-suffix?", strIsStringSuffix},
+        {"vector-8b-ref", strVector8bRef},
 };
 
 const ::std::unordered_map<::std::string,
@@ -131,6 +156,9 @@ const ::std::unordered_map<::std::string,
 const ::std::unordered_map<::std::string,
                            ::std::function<ValueP(ValueP, ValueP, ValueP, EnvironmentP)>> TernaryOps {
         {"substring", strSubstring},
+        {"string-set!", strStringSetBang},
+        {"string-replace", strStringReplace},
+        {"string-replace!", strStringReplaceBang},
 };
 
 }

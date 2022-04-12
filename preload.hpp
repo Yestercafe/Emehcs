@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 #include <unordered_set>
+#include <unordered_map>
 
 namespace emehcs {
 
@@ -19,6 +20,8 @@ auto make_shared_value(const T& t) {
 }
 
 ::std::string show(const Value& value, bool = false);
+
+extern ::std::unordered_map<char, char> pairs_sign;
 
 }
 

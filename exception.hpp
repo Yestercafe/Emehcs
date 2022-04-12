@@ -93,19 +93,27 @@ class NotFunctionException : public LispException {
 
 class UnboundVarException : public LispException {
   public:
-    UnboundVarException (string str = "[UnboundVarException] Caused by", ValueP pValue = nullptr)
+    UnboundVarException(string str = "[UnboundVarException] Caused by", ValueP pValue = nullptr)
         : LispException(str, pValue)
     { }
 };
 
 class IdentifierException : public LispException {
   public:
-    IdentifierException (string str = "[IdentifierException] Caused by", ValueP pValue = nullptr)
+    IdentifierException(string str = "[IdentifierException] Caused by", ValueP pValue = nullptr)
             : LispException(str, pValue)
     { }
 };
 
 class OpenFileFailure : public ::std::exception {};
+
+
+class BadValueRangeException : public LispException {
+  public:
+    BadValueRangeException(string str = "[BadValueRangeException] Caused by", ValueP pValue = nullptr)
+            : LispException(str, pValue)
+    { }
+};
 
 }
 

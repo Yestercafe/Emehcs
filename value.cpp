@@ -103,7 +103,7 @@ namespace emehcs {
             ss << ::std::to_string(value.get<lv::Number>());
             break;
         case LispValType::Char:
-            ss << "'" << value.get<lv::Char>() << "'";
+            ss << "#\\" << value.get<lv::Char>();
             break;
         case LispValType::String:
             ss << '"' << value.get<lv::String>() << '"';
