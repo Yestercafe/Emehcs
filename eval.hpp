@@ -71,6 +71,7 @@ ValueP EqAssert(ValueP a, ValueP b, EnvironmentP env);
 }
 
 #include <details/scm-string.ipp>
+#include <details/scm-io.ipp>
 
 namespace emehcs
 {
@@ -109,6 +110,7 @@ const ::std::unordered_map<::std::string,
         {"string-trim", strStringTrim},
         {"string-trim-left", strStringTrimLeft},
         {"string-trim-right", strStringTrimRight},
+        {"print", lispPrintString},
 };
 
 const ::std::unordered_map<::std::string, ::std::function<ValueP(ValueP, ValueP, EnvironmentP)>> BinaryOps {

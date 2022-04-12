@@ -15,11 +15,13 @@ cmake ..
 make
 ```
 
+`emehcs_demo` 仓库中可以在 `exec` 目录下找到对应平台的可执行文件直接使用。
+
 ## CLI
 
 ```shell
-emehcs    # 启动 REPL
-emehcs filename.scm   # 解释运行 Scheme/Emehcs 源文件
+./emehcs    # 启动 REPL
+./emehcs filename.scm   # 解释运行 Scheme/Emehcs 源文件
 ```
 
 ## 简易文档
@@ -67,7 +69,7 @@ Emehcs 它的所有语句都由列表（List）构成，组成语言的基本单
 ; => 8
 ```
 
-Emehcs 的单行注释由 `;` 开头。
+Emehcs 的单行注释由 `;` 开头。（暂时不支持注释，不要写）
 
 #### 数据类型
 
@@ -219,6 +221,14 @@ Emehcs 的数字面量目前只可以表示非负整数，但是数可以存储�
 ; 定义一个函数（使用 define 提供的特殊形式）
 (define (foo2 x y)      ; 将函数名 foo2 放到参数列表中，将 lambda 关键字替换成 define
   (+ x y))
+
+; 求斐波那契
+(define (fib n) (fib-iter n 1))
+(define (fib-iter n i)
+  (if (|| (= n 1) (= n 2))
+      1
+      (+ (fib (- n 1)) (fib (- n 2))))
+(fib 10)
 ```
 
 #### 分支
@@ -234,7 +244,7 @@ Emehcs 提供两种特殊函数作为分支语句，`if` 和 `cond`。使用方�
       (else else-clause))
 ```
 
-举例如：
+举例，如：
 
 ```scheme
 (if (/= 1 42) "Normal" "World ends")
@@ -266,16 +276,17 @@ Emehcs 暂时不提供循环语句。可以用尾递归实现循环，比如：
 暂时没有时间为每一个函数写文档，我写点注释，函数功能基本跟 Scheme 等同：
 
 ```scheme
-const ::std::unordered_map<::std::string, ::std::function<ValueP(ValueP, EnvironmentP)>> BuiltInFunctor{
-        {"quote",  funcQuote},
-        {"if",     funcIf},
-        {"cond",   funcCond},
+const ... BuiltInFunctor{
+        {"quote", funcQuote},
+        {"if", funcIf},
+        {"cond", funcCond},
         {"define", funcDefine},
+        // `string` 是用字符拼接字符串的函数，可以接受若干字符
         {"string", funcString},
 };
 
-const ::std::unordered_map<::std::string,
-                           ::std::function<ValueP(ValueP, EnvironmentP)>> UnaryOps {
+// 单参数函数
+const ... UnaryOps {
         {"-0", numericUnopMinus},
         {"not", boolBoolUnopNot},
         {"car", listCar},
@@ -300,9 +311,11 @@ const ::std::unordered_map<::std::string,
         {"string-trim", strStringTrim},
         {"string-trim-left", strStringTrimLeft},
         {"string-trim-right", strStringTrimRight},
+        {"print", lispPrintString},
 };
 
-const ::std::unordered_map<::std::string, ::std::function<ValueP(ValueP, ValueP, EnvironmentP)>> BinaryOps {
+// 二参数函数
+const ... BinaryOps {
         {"=", numBoolBinopEq},
         {"<", numBoolBinopL},
         {"<=", numBoolBinopLe},
@@ -330,8 +343,8 @@ const ::std::unordered_map<::std::string, ::std::function<ValueP(ValueP, ValueP,
         {"vector-8b-ref", strVector8bRef},
 };
 
-const ::std::unordered_map<::std::string,
-                           ::std::function<ValueP(ValueP, ValueP, EnvironmentP)>> FoldOps {
+// 至少二参数的可以多参数的函数
+const ... FoldOps {
         {"+", numericBinopPlus},
         {"-", numericBinopMinus},
         {"*", numericBinopTimes},
@@ -344,8 +357,8 @@ const ::std::unordered_map<::std::string,
         {"string-append", strStringAppend}
 };
 
-const ::std::unordered_map<::std::string,
-                           ::std::function<ValueP(ValueP, ValueP, ValueP, EnvironmentP)>> TernaryOps {
+// 三参数函数
+const ... TernaryOps {
         {"substring", strSubstring},
         {"string-set!", strStringSetBang},
         {"string-replace", strStringReplace},
