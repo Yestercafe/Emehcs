@@ -256,11 +256,11 @@ ValueP strSubstring(ValueP a, ValueP b, ValueP c, EnvironmentP env) {
 }
 
 ValueP strStringHead(ValueP a, ValueP b, EnvironmentP env) {
-    return strSubstring(a, make_shared_value(0), b, env);
+    return strSubstring(a, make_shared_value(lv::Number(0)), b, env);
 }
 
 ValueP strStringTail(ValueP a, ValueP b, EnvironmentP env) {
-    return strSubstring(a, b, make_shared_value(-1), env);
+    return strSubstring(a, b, make_shared_value(lv::Number(-1)), env);
 }
 
 ValueP strStringPadLeft(ValueP a, ValueP b, EnvironmentP env) {

@@ -15,8 +15,8 @@ using ValueP = ::std::shared_ptr<Value>;
 using EnvironmentP = ::std::shared_ptr<Environment>;
 
 template<typename T>
-auto make_shared_value(const T& t) {
-    return ::std::make_shared<Value>(t);
+auto make_shared_value(T&& t) {
+    return ::std::make_shared<Value>(::std::forward<T>(t));
 }
 
 ::std::string show(const Value& value, bool = false);

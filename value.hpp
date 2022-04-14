@@ -77,10 +77,13 @@ class Value {
         : var(nullptr)
     { }
 
+    Value(const Value&) = default;
+    Value(Value&&) = default;
+
     template<typename T>
-    Value(T&& value)
-        : var{::std::forward<T>(value)}
-    {  }
+    Value(T&& t)
+        : var{::std::forward<T>(t)}
+    { }
 
     LispValType get_type() const noexcept {
         return static_cast<LispValType>(var.index());
