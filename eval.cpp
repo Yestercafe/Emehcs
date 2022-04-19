@@ -320,7 +320,7 @@ ValueP funcLet(ValueP pValue, EnvironmentP env) {
             throw BadSpecialFormException("[BadSpecialFormException] `let` mapping item should be like (var value), but it is", mapping);
         }
         auto mapping_deter {mapping->get<lv::List>()};
-        if (mapping_deter[0]->get_type() == LispValType::Atom) {
+        if (mapping_deter[0]->get_type() != LispValType::Atom) {
             throw BadSpecialFormException("[BadSpecialFormException] The first part of `let` mapping item should be Atom, but it is", mapping_deter[0]);
         }
         let_local_env->put(mapping_deter[0]->get<lv::Atom>().str, eval(mapping_deter[1], env));
@@ -592,27 +592,28 @@ ValueP loadFromFileWithPrompt(ValueP a, EnvironmentP env, bool prompt) {
             if (line_number == 1) {
                 if (!line.empty() && line.front() == '*') {
                     line.erase(line.begin());
+                    while (!line.empty() && ::std::isspace(line.front())) {
+                        line.erase(line.begin());
+                    }
+                    if (line == "test") {
+                        flagTest = true;
+                    }
+                    continue;
                 }
-                while (!line.empty() && ::std::isspace(line.front())) {
-                    line.erase(line.begin());
-                }
-                if (line == "test") {
-                    flagTest = true;
-                }
-                continue;
             }
-            for (auto&& ch: line) {
+            for (size_t i {}; i < line.length(); ++i) {
+                auto& ch {line[i]};
                 if (pairs_sign.find(ch) != pairs_sign.end()) {
                     sign_stack.push(ch);
                 }
                 else {
                     switch (ch) {
                         case ')': case ']': case '}':
-                            if (pairs_sign[sign_stack.top()] == ch) {
+                            if (!sign_stack.empty() && pairs_sign[sign_stack.top()] == ch) {
                                 sign_stack.pop();
                             }
                             else {
-                                throw ParserError("[ParserError] Error signs paired");
+                                throw ParserError("[ParserError] Error signs paired, at L" + ::std::to_string(line_number) + "C" + ::std::to_string(i + 1));
                             }
                             break;
                         case '"':
