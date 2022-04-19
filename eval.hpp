@@ -44,6 +44,7 @@ ValueP funcQuote(ValueP pValue, EnvironmentP env);
 ValueP funcIf(ValueP pValue, EnvironmentP env);
 ValueP funcCond(ValueP pValue, EnvironmentP env);
 ValueP funcDefine(ValueP pValue, EnvironmentP env);
+ValueP funcLet(ValueP pValue, EnvironmentP env);
 ValueP numericUnopMinus(ValueP a, EnvironmentP env);
 ValueP boolBoolUnopNot(ValueP a, EnvironmentP env);
 ValueP listCar(ValueP a, EnvironmentP env);
@@ -77,11 +78,12 @@ namespace emehcs
 {
 
 const ::std::unordered_map<::std::string, ::std::function<ValueP(ValueP, EnvironmentP)>> BuiltInFunctor{
-        {"quote",  funcQuote},
-        {"if",     funcIf},
-        {"cond",   funcCond},
+        {"quote", funcQuote},
+        {"if", funcIf},
+        {"cond", funcCond},
         {"define", funcDefine},
         {"string", funcString},
+        {"let", funcLet},
 };
 
 const ::std::unordered_map<::std::string,

@@ -308,6 +308,30 @@ ValueP funcDefine(ValueP pValue, EnvironmentP env) {
     throw BadSpecialFormException("[BadSpecialFormException] `define` can only be used to define a variable or a function");
 }
 
+ValueP funcLet(ValueP pValue, EnvironmentP env) {
+    auto list {pValue->get<lv::List>()};
+    if (list[1]->get_type() != LispValType::List) {
+        throw BadSpecialFormException("[BadSpecialFormException] `let` mapping list should be like ((var1 value1) (var2 value2) ...)), but it is", list[1]);
+    }
+    auto mapping_list {list[1]->get<lv::List>()};
+    auto let_local_env = ::std::make_shared<Environment>(env);
+    for (auto&& mapping : mapping_list) {
+        if (mapping->get_type() != LispValType::List || mapping->get<lv::List>().size() != 2) {
+            throw BadSpecialFormException("[BadSpecialFormException] `let` mapping item should be like (var value), but it is", mapping);
+        }
+        auto mapping_deter {mapping->get<lv::List>()};
+        if (mapping_deter[0]->get_type() == LispValType::Atom) {
+            throw BadSpecialFormException("[BadSpecialFormException] The first part of `let` mapping item should be Atom, but it is", mapping_deter[0]);
+        }
+        let_local_env->put(mapping_deter[0]->get<lv::Atom>().str, eval(mapping_deter[1], env));
+    }
+
+    for (size_t i {2}; i < list.size() - 1; ++i) {
+        eval(list[i], let_local_env);
+    }
+    return eval(list.back(), let_local_env);
+}
+
 ValueP numericUnopMinus(ValueP a, EnvironmentP env) {
     CHECK_TYPE(a, Number);
     return make_shared_value(-a->get<lv::Number>());
