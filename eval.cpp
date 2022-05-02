@@ -232,7 +232,7 @@ ValueP funcCond(ValueP pValue, EnvironmentP env) {
         }
 
         auto pred {eval(elem->get<lv::List>()[0], env)};
-        if (pred->get_type() == LispValType::Atom && pred->get<lv::Atom>().str == "else") {
+        if (pred->get_type() == LispValType::Atom) {
             pred = make_shared_value(lv::Bool(true));
         }
         auto conseq {elem->get<lv::List>()[1]};
@@ -343,7 +343,6 @@ ValueP boolBoolUnopNot(ValueP a, EnvironmentP env) {
 }
 
 ValueP listCar(ValueP a, EnvironmentP env) {
-    CHECK_TYPE(a, List);
     EVAL_A();
     switch (a->get_type()) {
         case LispValType::List:
@@ -356,7 +355,6 @@ ValueP listCar(ValueP a, EnvironmentP env) {
 }
 
 ValueP listCdr(ValueP a, EnvironmentP env) {
-    CHECK_TYPE(a, List);
     EVAL_A();
     switch (a->get_type()) {
         case LispValType::List: {
