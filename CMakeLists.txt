@@ -7,6 +7,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 add_definitions(-D__EMEHCS_DEBUG=1)
 
-add_executable(emehcs preload.cpp main.cpp value.cpp defs.cpp parser.cpp environment.cpp
+add_executable(emehcs preload.cpp ui.cpp main.cpp value.cpp defs.cpp parser.cpp environment.cpp
         eval.cpp details/scm-string.cpp details/scm-io.cpp tests.cpp)
 target_include_directories(emehcs PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

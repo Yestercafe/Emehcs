@@ -583,7 +583,7 @@ ValueP loadFromFileWithPrompt(ValueP a, EnvironmentP env, bool prompt) {
             throw OpenFileFailure();
         }
         ::std::string expr;
-        std::stack<char> sign_stack;
+        ::std::stack<char> sign_stack;
         int quote_counter {0};
         while (::std::getline(ifs, line)) {
             ++line_number;
