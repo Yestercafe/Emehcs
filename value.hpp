@@ -59,7 +59,7 @@ struct Function {
 
 class Value {
   private:
-    using Varient =
+    using Variant =
             ::std::variant<lv::Atom
                          , lv::List
                          , lv::DottedList
@@ -70,7 +70,7 @@ class Value {
                          , lv::Function
                          >;
 
-    Varient var;
+    Variant var;
 
   public:
     Value()
