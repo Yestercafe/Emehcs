@@ -37,7 +37,7 @@ struct Atom {
 };
 using List         = ::std::deque<::std::shared_ptr<Value>>;
 using DottedList   = ::std::pair<::std::deque<::std::shared_ptr<Value>>, ::std::shared_ptr<Value>>;
-using Number       = ::std::int64_t;
+using Number       = double;
 using Char         = char;
 using String       = ::std::string;
 using Bool         = bool;

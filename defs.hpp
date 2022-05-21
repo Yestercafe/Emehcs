@@ -16,6 +16,7 @@ constexpr ::std::string_view Symbol = "!$%&|*+-/:<=?>@^_~#";
 bool isSymbol(char c);
 bool isODigit(char c);
 bool isXDigit(char c);
+bool isInteger(lv::Number n);
 
 const ::std::unordered_map<char, char> EscapedMap {
         {'b', '\b'},

@@ -351,6 +351,26 @@ ValueP debugGlobalContext(EnvironmentP env) {
     return make_shared_value(lv::Bool(true));
 }
 
+ValueP debugEnvironment(EnvironmentP env) {
+    for (const auto& p : env->env) {
+        ::std::cout << "(" << p.first << " . " << *p.second << ")" << ::std::endl;
+    }
+    if (env->closure) debugEnvironment(env->closure);
+    if (env->super_env) debugEnvironment(env->super_env);
+
+    return make_shared_value(lv::Bool(true));
+}
+
+ValueP debugGetFunctionEnv(ValueP a, EnvironmentP env) {
+    CHECK_TYPE(a, Function);
+
+    if (a->get<lv::Function>().closure) {
+        debugEnvironment(a->get<lv::Function>().closure);
+    }
+
+    return make_shared_value(lv::Bool(true));
+}
+
 ValueP numericUnopMinus(ValueP a, EnvironmentP env) {
     CHECK_TYPE(a, Number);
     return make_shared_value(-a->get<lv::Number>());
@@ -419,27 +439,28 @@ ValueP numericBinopDivide(ValueP a, ValueP b, EnvironmentP env) {
 }
 
 ValueP numericBinopMod(ValueP a, ValueP b, EnvironmentP env) {
-    CHECK_TYPE(a, Number);
-    CHECK_TYPE(b, Number);
-    lv::Number aa = a->get<lv::Number>(), bb = b->get<lv::Number>();
+    CHECK_INTEGER(a);
+    CHECK_INTEGER(b);
+    lv::Number aa {a->get<lv::Number>()}, bb {b->get<lv::Number>()};
+    auto ia {static_cast<::std::int64_t>(aa)}, ib {static_cast<::std::int64_t>(bb)};
     if (bb > 0) {
-        return make_shared_value(aa % bb);
+        return make_shared_value(static_cast<lv::Number>(ia % ib));
     }
     else {
-        return make_shared_value((aa * bb < 0 ? -1 : 1) * (-bb - ::emehcs::abs(aa) % ::emehcs::abs(bb)));
+        return make_shared_value(static_cast<lv::Number>(ia * ib < 0 ? -1 : 1) * (-ib - ::emehcs::abs(ia) % ::emehcs::abs(ib)));
     }
 }
 
 ValueP numericBinopQuot(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, Number);
     CHECK_TYPE(b, Number);
-    return make_shared_value(a->get<lv::Number>() / b->get<lv::Number>());
+    return make_shared_value(static_cast<lv::Number>(static_cast<::std::int64_t>(a->get<lv::Number>()) / static_cast<::std::int64_t>(b->get<lv::Number>())));
 }
 
 ValueP numericBinopRem(ValueP a, ValueP b, EnvironmentP env) {
-    CHECK_TYPE(a, Number);
-    CHECK_TYPE(b, Number);
-    return make_shared_value(a->get<lv::Number>() % b->get<lv::Number>());
+    CHECK_INTEGER(a);
+    CHECK_INTEGER(b);
+    return make_shared_value(static_cast<lv::Number>(static_cast<::std::int64_t>(a->get<lv::Number>()) % static_cast<::std::int64_t>(b->get<lv::Number>())));
 }
 
 ValueP numBoolBinopEq(ValueP a, ValueP b, EnvironmentP env) {

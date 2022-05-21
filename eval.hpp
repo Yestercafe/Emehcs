@@ -6,6 +6,7 @@
 #include <value.hpp>
 #include <parser.hpp>
 #include <exception.hpp>
+#include <defs.hpp>
 
 namespace emehcs {
 
@@ -15,8 +16,16 @@ ValueP apply(const lv::Function& func, ValueP actual, EnvironmentP super_env);
 #define CHECK_TYPE(WHO, TYPE)                                                                           \
     WHO = eval(WHO, env);                                                                               \
     do {                                                                                                \
-        if (WHO->get_type() != LispValType::TYPE) {                                                     \
+        if ((WHO)->get_type() != LispValType::TYPE) {                                                   \
             throw TypeMismatchException("[TypeMismatchException] Should be a `" #TYPE "` but is", WHO); \
+        }                                                                                               \
+    } while (false)
+
+#define CHECK_INTEGER(WHO)                                                                              \
+    CHECK_TYPE(WHO, Number);                                                                            \
+    do {                                                                                                \
+        if (!isInteger((WHO)->get<lv::Number>())) {                                                     \
+            throw TypeMismatchException("[TypeMismatchException] Should be an Integer but is", WHO);    \
         }                                                                                               \
     } while (false)
 
@@ -46,6 +55,8 @@ ValueP funcCond(ValueP pValue, EnvironmentP env);
 ValueP funcDefine(ValueP pValue, EnvironmentP env);
 ValueP funcLet(ValueP pValue, EnvironmentP env);
 ValueP debugGlobalContext(EnvironmentP env);
+ValueP debugEnvironment(EnvironmentP env);
+ValueP debugGetFunctionEnv(ValueP a, EnvironmentP env);
 ValueP numericUnopMinus(ValueP a, EnvironmentP env);
 ValueP boolBoolUnopNot(ValueP a, EnvironmentP env);
 ValueP listCar(ValueP a, EnvironmentP env);
@@ -89,6 +100,7 @@ const ::std::unordered_map<::std::string, ::std::function<ValueP(ValueP, Environ
 
 const ::std::unordered_map<::std::string, ::std::function<ValueP(EnvironmentP)>> ZeroOps {
         {"debug-global-context", debugGlobalContext},
+        {"debug-environment", debugEnvironment},
 };
 
 const ::std::unordered_map<::std::string,
@@ -118,6 +130,7 @@ const ::std::unordered_map<::std::string,
         {"string-trim-left", strStringTrimLeft},
         {"string-trim-right", strStringTrimRight},
         {"print", lispPrintString},
+        {"debug-get-function-env", debugGetFunctionEnv},
 };
 
 const ::std::unordered_map<::std::string, ::std::function<ValueP(ValueP, ValueP, EnvironmentP)>> BinaryOps {

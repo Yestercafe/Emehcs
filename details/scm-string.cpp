@@ -10,10 +10,10 @@ namespace emehcs {
 
 // Construction of Strings
 ValueP strMakeString(ValueP a, ValueP b, EnvironmentP env) {
-    CHECK_TYPE(a, Number);
+    CHECK_INTEGER(a);
     CHECK_TYPE(b, Char);
 
-    lv::Number a_num {a->get<lv::Number>()};
+    auto a_num {static_cast<::std::int64_t>(a->get<lv::Number>())};
     lv::Char b_char {b->get<lv::Char>()};
     lv::String ret(a_num, b_char);
 
@@ -66,7 +66,7 @@ ValueP strIsString(ValueP a, EnvironmentP env) {
 ValueP strStringLength(ValueP a, EnvironmentP env) {
     CHECK_TYPE(a, String);
     auto str {a->get<lv::String>()};
-    return make_shared_value(lv::Number(str.length()));
+    return make_shared_value(static_cast<lv::Number>(str.length()));
 }
 
 ValueP strIsStringNull(ValueP a, EnvironmentP env) {
@@ -77,10 +77,10 @@ ValueP strIsStringNull(ValueP a, EnvironmentP env) {
 
 ValueP strStringRef(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, String);
-    CHECK_TYPE(b, Number);
+    CHECK_INTEGER(b);
     auto str {a->get<lv::String>()};
     const auto I {str.length()};
-    auto idx {b->get<lv::Number>()};
+    auto idx {static_cast<::std::int64_t>(b->get<lv::Number>())};
     if (idx < 0 || idx >= I) {
         throw BadValueRangeException("[BadValueRangeException] index " + ::std::to_string(idx) + " out of bound with", a);
     }
@@ -89,11 +89,11 @@ ValueP strStringRef(ValueP a, ValueP b, EnvironmentP env) {
 
 ValueP strStringSetBang(ValueP a, ValueP b, ValueP c, EnvironmentP env) {
     CHECK_TYPE(a, String);
-    CHECK_TYPE(b, Number);
+    CHECK_INTEGER(b);
     CHECK_TYPE(c, Char);
     auto str {a->get<lv::String>()};
     const auto I {str.length()};
-    auto idx {b->get<lv::Number>()};
+    auto idx {static_cast<::std::int64_t>(b->get<lv::Number>())};
     if (idx < 0 || idx >= I) {
         throw BadValueRangeException("[BadValueRangeException] index " + ::std::to_string(idx) + " out of bound with", a);
     }
@@ -137,13 +137,13 @@ ValueP strStringHash(ValueP a, EnvironmentP env) {
     auto s {a->get<lv::String>()};
     const auto I {s.length()};
     const int p = 31, m = 1e9 + 7;
-    lv::Number hash = 0;
+    ::std::int64_t hash = 0;
     long p_pow = 1;
     for (int i = 0; i < I; i++) {
         hash = (hash + (s[i] - 'a' + 1) * p_pow) % m;
         p_pow = (p_pow * p) % m;
     }
-    return make_shared_value(hash);
+    return make_shared_value(static_cast<lv::Number>(hash));
 }
 
 
@@ -249,10 +249,10 @@ ValueP strStringAppend(ValueP a, ValueP b, EnvironmentP env) {
 
 ValueP strSubstring(ValueP a, ValueP b, ValueP c, EnvironmentP env) {
     CHECK_TYPE(a, String);
-    CHECK_TYPE(b, Number);
-    CHECK_TYPE(c, Number);
+    CHECK_INTEGER(b);
+    CHECK_INTEGER(c);
 
-    return make_shared_value(a->get<lv::String>().substr(b->get<lv::Number>(), c->get<lv::Number>()));
+    return make_shared_value(a->get<lv::String>().substr(static_cast<::std::int64_t>(b->get<lv::Number>()), static_cast<::std::int64_t>(c->get<lv::Number>())));
 }
 
 ValueP strStringHead(ValueP a, ValueP b, EnvironmentP env) {
@@ -265,10 +265,10 @@ ValueP strStringTail(ValueP a, ValueP b, EnvironmentP env) {
 
 ValueP strStringPadLeft(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, String);
-    CHECK_TYPE(b, Number);
+    CHECK_INTEGER(b);
 
     auto str {a->get<lv::String>()};
-    auto bb {b->get<lv::Number>()};
+    auto bb {static_cast<::std::int64_t>(b->get<lv::Number>())};
     if (bb < 0) {
         throw BadValueRangeException("[BadValueRangeException] should be a non-negative number, but gotten", b);
     }
@@ -287,10 +287,10 @@ ValueP strStringPadLeft(ValueP a, ValueP b, EnvironmentP env) {
 
 ValueP strStringPadRight(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, String);
-    CHECK_TYPE(b, Number);
+    CHECK_INTEGER(b);
 
     auto str {a->get<lv::String>()};
-    auto bb {b->get<lv::Number>()};
+    auto bb {static_cast<::std::int64_t>(b->get<lv::Number>())};
     if (bb < 0) {
         throw BadValueRangeException("[BadValueRangeException] should be a non-negative number, but gotten", b);
     }
@@ -418,10 +418,10 @@ ValueP strStringReplaceBang(ValueP a, ValueP b, ValueP c, EnvironmentP env) {
 // Byte Vectors
 ValueP strVector8bRef(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(a, String);
-    CHECK_TYPE(b, Number);
+    CHECK_INTEGER(b);
 
     auto str {a->get<lv::String>()};
-    auto idx {b->get<lv::Number>()};
+    auto idx {static_cast<::std::int64_t>(b->get<lv::Number>())};
     const auto Len {str.length()};
     if (idx < 0 || idx >= Len) {
         throw BadValueRangeException("[BadValueRangeException] index " + ::std::to_string(idx) + " out of bound with", a);
@@ -429,7 +429,7 @@ ValueP strVector8bRef(ValueP a, ValueP b, EnvironmentP env) {
 
     lv::Char c {str[idx]};
 
-    return make_shared_value(lv::Number(c));
+    return make_shared_value(static_cast<lv::Number>(c));
 }
 
 }

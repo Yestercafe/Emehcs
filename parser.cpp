@@ -262,7 +262,7 @@ ValueP parseDec(const ::std::string_view& s, size_t& cursor) {
         return nullptr;
     }
 
-    lv::Number number_n {::std::stoll(n.str())};
+    lv::Number number_n {static_cast<lv::Number>(::std::stoll(n.str()))};
     return make_shared_value(number_n);
 }
 
@@ -309,7 +309,7 @@ static ValueP parseHexAux(const ::std::string_view& s, size_t& cursor, char flag
         return nullptr;
     }
 
-    lv::Number number_n {::std::stoll(n.str(), nullptr, (flag == 'x' ? 16 : 8))};
+    lv::Number number_n {static_cast<lv::Number>(::std::stoll(n.str(), nullptr, (flag == 'x' ? 16 : 8)))};
     return make_shared_value(number_n);
 }
 

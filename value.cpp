@@ -46,7 +46,11 @@ namespace emehcs {
         }
         ss << p;
     }
-    ss << ") ...)";
+    ss << ")";
+    for (auto& l : func.body) {
+        ss << ' ' << show(*l);
+    }
+    ss << ")";
 
     return ss.str();
 }
@@ -100,7 +104,7 @@ namespace emehcs {
             ss << show(value.get<lv::DottedList>(), should_prompt_type);
             break;
         case LispValType::Number:
-            ss << ::std::to_string(value.get<lv::Number>());
+            ss << value.get<lv::Number>();
             break;
         case LispValType::Char:
             ss << "#\\" << value.get<lv::Char>();
