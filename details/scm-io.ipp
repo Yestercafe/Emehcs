@@ -6,7 +6,10 @@
 
 namespace emehcs {
 
-ValueP lispPrintString(ValueP a, EnvironmentP env);
+ValueP lispPrint(ValueP a, EnvironmentP env);
+ValueP lispPrintLn(ValueP a, EnvironmentP env);
+ValueP lispPrintFloating(ValueP a, ValueP b, EnvironmentP env);
+ValueP lispPrintFloatingLn(ValueP a, ValueP b, EnvironmentP env);
 
 }
 

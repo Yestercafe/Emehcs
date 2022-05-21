@@ -129,7 +129,8 @@ const ::std::unordered_map<::std::string,
         {"string-trim", strStringTrim},
         {"string-trim-left", strStringTrimLeft},
         {"string-trim-right", strStringTrimRight},
-        {"print", lispPrintString},
+        {"print", lispPrint},
+        {"print-ln", lispPrintLn},
         {"debug-get-function-env", debugGetFunctionEnv},
 };
 
@@ -159,6 +160,8 @@ const ::std::unordered_map<::std::string, ::std::function<ValueP(ValueP, ValueP,
         {"string-prefix?", strIsStringPrefix},
         {"string-suffix?", strIsStringSuffix},
         {"vector-8b-ref", strVector8bRef},
+        {"print-floating", lispPrintFloating},
+        {"print-floating-ln", lispPrintFloatingLn},
 };
 
 const ::std::unordered_map<::std::string,
