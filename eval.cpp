@@ -70,6 +70,15 @@ ValueP eval(ValueP pValue, EnvironmentP env) {
                 }
 
                 {
+                    auto fnd = ZeroOps.find(func.str);
+                    if (fnd != ZeroOps.cend()) {
+                        if (list.size() != 1) {
+                            throw NumArgsException(0, pValue);
+                        }
+                        return fnd->second(env);
+                    }
+                }
+                {
                     auto fnd = UnaryOps.find(func.str);
                     if (fnd != UnaryOps.cend()) {
                         if (list.size() != 2) {
@@ -332,6 +341,16 @@ ValueP funcLet(ValueP pValue, EnvironmentP env) {
     return eval(list.back(), let_local_env);
 }
 
+ValueP debugGlobalContext(EnvironmentP env) {
+    if (global_context->env.empty()) {
+        ::std::cout << "nil" << ::std::endl;
+    }
+    for (const auto& p : global_context->env) {
+        ::std::cout << "(" << p.first << " . " << *p.second << ")" << ::std::endl;
+    }
+    return make_shared_value(lv::Bool(true));
+}
+
 ValueP numericUnopMinus(ValueP a, EnvironmentP env) {
     CHECK_TYPE(a, Number);
     return make_shared_value(-a->get<lv::Number>());
@@ -576,7 +595,7 @@ ValueP loadFromFileWithPrompt(ValueP a, EnvironmentP env, bool prompt) {
     auto filename {a->get<lv::String>()};
     size_t line_number = 0;
     ::std::string line;
-    EnvironmentP old_env {::std::make_shared<Environment>(*env)};  // copy the surface layer
+    EnvironmentP old_env {::std::make_shared<Environment>(*global_context)};  // copy the surface layer
     try {
         ::std::ifstream ifs(filename, ::std::ios::in);
         if (!ifs.is_open()) {
@@ -616,6 +635,12 @@ ValueP loadFromFileWithPrompt(ValueP a, EnvironmentP env, bool prompt) {
                             break;
                         case '"':
                             quote_counter = ~quote_counter;
+                            break;
+                        case ';':
+                            if (quote_counter == 0) {
+                                line.erase(line.begin() + i, line.end());
+                            }
+                            break;
                         default:
                             break;
                     }
@@ -669,7 +694,7 @@ ValueP loadFromFileWithPrompt(ValueP a, EnvironmentP env, bool prompt) {
         ::std::cout << "Trap at Line " << line_number << " in source file " << filename << ", " << ::std::endl;
         ::std::cout << "which is `" << line << "`" << ::std::endl;
         ::std::cout << e.what() << '\n';
-        *env = *old_env;  // recovery status
+        *global_context = *old_env;  // recovery status
         return make_shared_value(lv::Bool(false));
     }
 

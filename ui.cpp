@@ -8,6 +8,7 @@
 #include <fstream>
 #include <environment.hpp>
 #include <stack>
+#include <algorithm>
 
 namespace ui {
 
@@ -41,6 +42,12 @@ int repl() {
                             break;
                         case '"':
                             quote_counter = ~quote_counter;
+                            break;
+                        case ';':
+                            if (quote_counter == 0) {
+                                line.erase(line.begin() + i, line.end());
+                            }
+                            break;
                         default:
                             break;
                     }

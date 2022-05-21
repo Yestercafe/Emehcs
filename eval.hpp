@@ -45,6 +45,7 @@ ValueP funcIf(ValueP pValue, EnvironmentP env);
 ValueP funcCond(ValueP pValue, EnvironmentP env);
 ValueP funcDefine(ValueP pValue, EnvironmentP env);
 ValueP funcLet(ValueP pValue, EnvironmentP env);
+ValueP debugGlobalContext(EnvironmentP env);
 ValueP numericUnopMinus(ValueP a, EnvironmentP env);
 ValueP boolBoolUnopNot(ValueP a, EnvironmentP env);
 ValueP listCar(ValueP a, EnvironmentP env);
@@ -84,6 +85,10 @@ const ::std::unordered_map<::std::string, ::std::function<ValueP(ValueP, Environ
         {"define", funcDefine},
         {"string", funcString},
         {"let", funcLet},
+};
+
+const ::std::unordered_map<::std::string, ::std::function<ValueP(EnvironmentP)>> ZeroOps {
+        {"debug-global-context", debugGlobalContext},
 };
 
 const ::std::unordered_map<::std::string,
