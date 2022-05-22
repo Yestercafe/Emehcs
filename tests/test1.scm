@@ -5,5 +5,5 @@
 (cons '(1 . 2) '(1 2 3 . (1 2 3)))
 
 (if #t "Yes" "No")
-(cond ((> 1 2) "Yes") ((&& #t #f) "Maybe") (else "No"))
-(cond ((> 1 2) "Yes") ((&& #t #t) "Maybe") (else "No"))
+(cond ((> 1 2) "Yes") ((&& #t #f) "Maybe") (#t "No"))
+(cond ((> 1 2) "Yes") ((&& #t #t) "Maybe") (#t "No"))
