@@ -54,6 +54,7 @@ ValueP funcIf(ValueP pValue, EnvironmentP env);
 ValueP funcCond(ValueP pValue, EnvironmentP env);
 ValueP funcDefine(ValueP pValue, EnvironmentP env);
 ValueP funcLet(ValueP pValue, EnvironmentP env);
+ValueP funcFor(ValueP pValue, EnvironmentP env);
 ValueP funcSetBang(ValueP a, ValueP b, EnvironmentP env);
 ValueP debugGlobalContext(EnvironmentP env);
 ValueP debugEnvironment(EnvironmentP env);
@@ -82,6 +83,7 @@ ValueP eqv(ValueP a, ValueP b, EnvironmentP env);
 ValueP loadFromFile(ValueP a, EnvironmentP env);
 ValueP loadFromFileWithPrompt(ValueP a, EnvironmentP env, bool prompt = false);
 ValueP EqAssert(ValueP a, ValueP b, EnvironmentP env);
+ValueP listGenRange(ValueP a, ValueP b, EnvironmentP env);
 }
 
 #include <details/scm-string.ipp>
@@ -97,6 +99,7 @@ const ::std::unordered_map<::std::string, ::std::function<ValueP(ValueP, Environ
         {"define", funcDefine},
         {"string", funcString},
         {"let", funcLet},
+        {"for", funcFor},
 };
 
 const ::std::unordered_map<::std::string, ::std::function<ValueP(EnvironmentP)>> ZeroOps {
@@ -164,6 +167,7 @@ const ::std::unordered_map<::std::string, ::std::function<ValueP(ValueP, ValueP,
         {"print-floating", lispPrintFloating},
         {"print-floating-ln", lispPrintFloatingLn},
         {"set!", funcSetBang},
+        {"range", listGenRange},
 };
 
 const ::std::unordered_map<::std::string,

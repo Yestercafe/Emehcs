@@ -63,14 +63,14 @@ class Environment {
         bool ret {false};
         auto i {this};
         while (i) {
-            ret |= env.contains(ident);
+            ret |= i->env.contains(ident);
             if (ret) {
-                env[ident] = pValue;
+                i->env[ident] = pValue;
                 return ret;
             }
 
             if (i->closure) {
-                ret |= closure->update(ident, pValue);
+                ret |= i->closure->update(ident, pValue);
                 if (ret) {
                     return ret;
                 }

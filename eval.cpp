@@ -348,8 +348,38 @@ ValueP funcSetBang(ValueP a, ValueP b, EnvironmentP env) {
     if (!env->contains(a->get<lv::Atom>().str)) {
         throw UnboundVarException("[UnboundVarException] `set!` can only update value of existed variable");
     }
+    b = eval(b, env);
     env->update(a->get<lv::Atom>().str, b);
     return b;
+}
+
+ValueP funcFor(ValueP pValue, EnvironmentP env) {
+    auto for_stm {pValue->get<lv::List>()};
+
+    auto var {for_stm[1]};
+    if (var->get_type() != LispValType::Atom) {
+        throw BadSpecialFormException("[BadSpecialFormException] Should be an `atom`, but it is", var);
+    }
+    ::std::string itr_name {var->get<lv::Atom>().str};
+
+    auto lst_v {eval(for_stm[2], env)};
+    if (lst_v->get_type() != LispValType::List) {
+        throw BadSpecialFormException("[BadSpecialFormException] Should be like a list, but it is", lst_v);
+    }
+    auto lst {lst_v->get<lv::List>()};
+
+    const int N = for_stm.size();
+    int loop_cnt = 0;
+    for (auto&& item : lst) {
+        EnvironmentP for_local_env {::std::make_shared<Environment>(env)};
+        for_local_env->put(itr_name, item);
+        for (int i {3}; i < N; ++i) {
+            eval(for_stm[i], for_local_env);
+        }
+        ++loop_cnt;
+    }
+
+    return make_shared_value(lv::Number(loop_cnt));
 }
 
 ValueP debugGlobalContext(EnvironmentP env) {
@@ -521,8 +551,6 @@ ValueP boolBoolBinopOr(ValueP a, ValueP b, EnvironmentP env) {
     CHECK_TYPE(b, Bool);
     return make_shared_value(a->get<lv::Bool>() || b->get<lv::Bool>());
 }
-
-
 
 ValueP listCons(ValueP a, ValueP b, EnvironmentP env) {
     EVAL_AB();
@@ -744,6 +772,20 @@ ValueP EqAssert(ValueP a, ValueP b, EnvironmentP env) {
         ::std::exit(-1);
     }
     return ret;
+}
+
+ValueP listGenRange(ValueP a, ValueP b, EnvironmentP env) {
+    CHECK_INTEGER(a);
+    CHECK_INTEGER(b);
+
+    auto dl = a->get<lv::Number>(), dr = b->get<lv::Number>();
+    auto l = static_cast<::std::int64_t>(dl), r = static_cast<::std::int64_t>(dr);
+    ValueP res = make_shared_value(lv::List{});
+    for (auto i = l; i < r; ++i) {
+        res->get<lv::List>().push_back(make_shared_value(lv::Number(i)));
+    }
+
+    return res;
 }
 
 }
