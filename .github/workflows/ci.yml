@@ -19,6 +19,6 @@ jobs:
       run: make
     - name: check
       run: |
-        cd tests
+        cd /home/runner/work/Emehcs/Emehcs
         for fn in $(ls)
-          ./emehcs tests/$fn
+          ./emehcs ./tests/$fn
