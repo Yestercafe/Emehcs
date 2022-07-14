@@ -341,6 +341,17 @@ ValueP funcLet(ValueP pValue, EnvironmentP env) {
     return eval(list.back(), let_local_env);
 }
 
+ValueP funcSetBang(ValueP a, ValueP b, EnvironmentP env) {
+    if (a->get_type() != LispValType::Atom) {
+        throw BadSpecialFormException("[BacSpecialFormException] `set!` expression should be like (set! atom value), but the placeholder of `atom` is", a);
+    }
+    if (!env->contains(a->get<lv::Atom>().str)) {
+        throw UnboundVarException("[UnboundVarException] `set!` can only update value of existed variable");
+    }
+    env->update(a->get<lv::Atom>().str, b);
+    return b;
+}
+
 ValueP debugGlobalContext(EnvironmentP env) {
     if (global_context->env.empty()) {
         ::std::cout << "nil" << ::std::endl;

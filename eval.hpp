@@ -54,6 +54,7 @@ ValueP funcIf(ValueP pValue, EnvironmentP env);
 ValueP funcCond(ValueP pValue, EnvironmentP env);
 ValueP funcDefine(ValueP pValue, EnvironmentP env);
 ValueP funcLet(ValueP pValue, EnvironmentP env);
+ValueP funcSetBang(ValueP a, ValueP b, EnvironmentP env);
 ValueP debugGlobalContext(EnvironmentP env);
 ValueP debugEnvironment(EnvironmentP env);
 ValueP debugGetFunctionEnv(ValueP a, EnvironmentP env);
@@ -162,6 +163,7 @@ const ::std::unordered_map<::std::string, ::std::function<ValueP(ValueP, ValueP,
         {"vector-8b-ref", strVector8bRef},
         {"print-floating", lispPrintFloating},
         {"print-floating-ln", lispPrintFloatingLn},
+        {"set!", funcSetBang},
 };
 
 const ::std::unordered_map<::std::string,
