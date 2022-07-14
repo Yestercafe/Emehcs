@@ -17,7 +17,8 @@ jobs:
       run: cmake .
     - name: make
       run: make
-    - name: make check
-      run: make check
-    - name: make distcheck
-      run: make distcheck
+    - name: check
+      run: |
+        cd tests
+        for fn in $(ls)
+          ./emehcs tests/$fn
