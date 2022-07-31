@@ -235,34 +235,50 @@ ValueP parseNumber(const ::std::string_view& s, size_t& cursor) {
  * @param s
  * @param cursor
  * @return do n <- many1 digit
-              return (Number (read n))
+              return (Number (read n))  (deprecated)
  */
 ValueP parseDec(const ::std::string_view& s, size_t& cursor) {
     using ::std::stringstream;
     using ::std::isdigit;
 
+    const auto past {cursor};
     const auto len {s.length()};
-
-    // n <- many1 digit
     char c {};
-    stringstream n;
+    stringstream integral, decimal;
+    bool inDecimal = false;
     if (cursor >= len) {
-       return nullptr;
+        return nullptr;
     }
     while (cursor < len) {
         c = s[cursor++];
-        if (!isdigit(c)) {
+        if (c == '.') {
+            if (inDecimal) {
+                cursor = past;
+                return nullptr;
+            }
+            inDecimal = true;
+        }
+        else if (isdigit(c)) {
+            if (!inDecimal) {
+                integral << c;
+            }
+            else {
+                decimal << c;
+            }
+        }
+        else {              // detect an illegal character, terminate and recover the cursor
             --cursor;
             break;
         }
-        n << c;
     }
 
-    if (n.str().length() == 0) {
+    if (integral.str().empty() && decimal.str().empty()) {
         return nullptr;
     }
 
-    lv::Number number_n {static_cast<lv::Number>(::std::stoll(n.str()))};
+    ::std::string concat {integral.str() + "." + decimal.str()};
+
+    lv::Number number_n {static_cast<lv::Number>(::std::stod(concat))};
     return make_shared_value(number_n);
 }
 
