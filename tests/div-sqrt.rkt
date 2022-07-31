@@ -15,7 +15,7 @@
 (define (average x y)
   (/ (+ x y) 2))
 
-(define tolerance (/ 1 10000000))
+(define tolerance .00000001)
 (define (good-enough? guess x)
   (< (abs (- (square guess) x)) tolerance))
 

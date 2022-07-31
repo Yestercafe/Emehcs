@@ -3,7 +3,7 @@
       (-0 n)
       n))
 
-(define tolerance (/ 1 100000))
+(define tolerance .000001)
 (define (fixed-point f first-guess)
   (define (close-enough? v1 v2)
     (< (abs (- v1 v2)) tolerance))
@@ -17,7 +17,7 @@
           (try next))))
   (try first-guess))
 
-(define dx (/ 1 100000000))
+(define dx .000000001)
 (define (deriv g)
   (lambda (x)
     (/ (- (g (+ x dx)) (g x))
