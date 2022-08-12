@@ -4,4 +4,6 @@
 .idea
 /cmake-*
 /_build
+.vscode
+/build
 
