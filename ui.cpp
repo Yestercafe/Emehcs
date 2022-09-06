@@ -93,9 +93,13 @@ int repl() {
 }
 
 int readFromFile(char* filename) {
-    auto ret = ::emehcs::loadFromFileWithPrompt(::emehcs::make_shared_value(::emehcs::lv::String(filename)), ::emehcs::global_context, true);
-
-    return !ret->get<::emehcs::lv::Bool>();
+    try {
+        auto ret = ::emehcs::loadFromFileWithPrompt(::emehcs::make_shared_value(::emehcs::lv::String(filename)),
+                                                    ::emehcs::global_context, true);
+        return !ret->get<::emehcs::lv::Bool>();
+    } catch (::emehcs::LispException e) {
+        throw e;
+    }
 }
 
 }

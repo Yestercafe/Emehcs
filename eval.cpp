@@ -748,14 +748,16 @@ ValueP loadFromFileWithPrompt(ValueP a, EnvironmentP env, bool prompt) {
     }
     catch (OpenFileFailure& e) {
         ::std::cout << "Can't open file `" << filename << "` correctly" << ::std::endl;
-        return make_shared_value(lv::Bool(false));
+        throw e;
+//        return make_shared_value(lv::Bool(false));
     }
     catch (LispException& e) {
         ::std::cout << "Trap at Line " << line_number << " in source file " << filename << ", " << ::std::endl;
         ::std::cout << "which is `" << line << "`" << ::std::endl;
         ::std::cout << e.what() << '\n';
         *global_context = *old_env;  // recovery status
-        return make_shared_value(lv::Bool(false));
+        throw e;
+//        return make_shared_value(lv::Bool(false));
     }
 
     if (flagTest) {

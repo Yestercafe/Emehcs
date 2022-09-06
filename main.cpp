@@ -2,6 +2,7 @@
 #include <tests.hpp>
 #include <ui.hpp>
 #include <environment.hpp>
+#include <exception.hpp>
 
 int main(int argc, char* argv[])
 {
@@ -13,7 +14,12 @@ int main(int argc, char* argv[])
     }
     else {
         for (size_t i {1}; i < argc; ++i) {
-            ::ui::readFromFile(argv[i]);
+            try {
+                ::ui::readFromFile(argv[i]);
+            } catch (::emehcs::LispException e) {
+                ::std::cerr << "placeholder" << ::std::endl;
+                ::std::exit(-1);
+            }
         }
     }
 }
