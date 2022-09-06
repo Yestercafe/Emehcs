@@ -273,6 +273,7 @@ ValueP parseDec(const ::std::string_view& s, size_t& cursor) {
     }
 
     if (integral.str().empty() && decimal.str().empty()) {
+        cursor = past;
         return nullptr;
     }
 
