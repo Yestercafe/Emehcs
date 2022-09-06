@@ -770,8 +770,7 @@ ValueP loadFromFileWithPrompt(ValueP a, EnvironmentP env, bool prompt) {
 ValueP EqAssert(ValueP a, ValueP b, EnvironmentP env) {
     auto ret = eqv(a, b, env);
     if (!ret->get<lv::Bool>()) {
-        ::std::cerr << "Assertion failed! " << *a << " /= " << *b << ::std::endl;
-        ::std::exit(-1);
+        throw AssertNotCorrespondException(a, b);
     }
     return ret;
 }

@@ -116,6 +116,20 @@ class BadValueRangeException : public LispException {
     { }
 };
 
+class AssertNotCorrespondException : public LispException {
+public:
+    AssertNotCorrespondException(ValueP lhs, ValueP rhs) {
+        ::std::stringstream ss;
+        ss << "[AssertNotCorrespondException] The values of "
+           << (lhs ? show(*lhs) : "<null>")
+           << " and "
+           << (rhs ? show(*rhs) : "<null>")
+           << " are not corresponding";
+
+        LispException::message = ss.str();
+    }
+};
+
 }
 
 #endif //EMEHCS_EXCEPTIONS_HPP
