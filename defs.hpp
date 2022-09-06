@@ -11,7 +11,8 @@ namespace emehcs {
 
 using size_t = ::std::size_t;
 
-constexpr ::std::string_view Symbol = "!$%&|*+-/:<=?>@^_~#";
+using namespace ::std::literals;
+constexpr ::std::string_view Symbol = "!$%&|*+-/:<=?>@^_~#"sv;
 
 bool isSymbol(char c);
 bool isODigit(char c);

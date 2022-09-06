@@ -29,10 +29,11 @@ class LispException {
     ValueP pValue;
 };
 
+using namespace ::std::literals;
 class NumArgsException : public LispException {
-    static constexpr string_view text_prefix {"[NumArgsException] Excepted "};
-    static constexpr string_view text_suffix {" arg(s)"};
-    static constexpr string_view at_least {"at least "};
+    static constexpr string_view text_prefix {"[NumArgsException] Excepted "sv};
+    static constexpr string_view text_suffix {" arg(s)"sv};
+    static constexpr string_view at_least {"at least "sv};
   public:
     NumArgsException(int nArgs, ValueP pValue = nullptr, bool showAtLeast = false)
         : nArgs{nArgs}
