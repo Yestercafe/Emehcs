@@ -6,4 +6,4 @@
 /_build
 .vscode
 /build
-
+*cache*
