@@ -789,4 +789,17 @@ ValueP listGenRange(ValueP a, ValueP b, EnvironmentP env) {
     return res;
 }
 
+ValueP execSequence(ValueP a, EnvironmentP env) {
+    if (a->get_type() != LispValType::List) {
+        throw TypeMismatchException("[TypeMismatchException] Should be a `List` but is", a);
+    }
+
+    auto lst {a->get<lv::List>()};
+    for (::std::size_t i = 0; i < lst.size() - 1; ++i) {
+        eval(lst[i], env);
+    }
+    
+    return eval(lst.back(), env);
+}
+
 }

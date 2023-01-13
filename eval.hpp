@@ -29,6 +29,14 @@ ValueP apply(const lv::Function& func, ValueP actual, EnvironmentP super_env);
         }                                                                                               \
     } while (false)
 
+#define CHECK_LIST(WHO)                                                                              \
+    CHECK_TYPE(WHO, List);                                                                            \
+    do {                                                                                                \
+        if (!isInteger((WHO)->get<lv::Number>())) {                                                     \
+            throw TypeMismatchException("[TypeMismatchException] Should be an Integer but is", WHO);    \
+        }                                                                                               \
+    } while (false)
+
 #define EVAL_A()                                                     \
     do {                                                             \
         a = eval(a, env);                                            \
@@ -84,6 +92,7 @@ ValueP loadFromFile(ValueP a, EnvironmentP env);
 ValueP loadFromFileWithPrompt(ValueP a, EnvironmentP env, bool prompt = false);
 ValueP EqAssert(ValueP a, ValueP b, EnvironmentP env);
 ValueP listGenRange(ValueP a, ValueP b, EnvironmentP env);
+ValueP execSequence(ValueP a, EnvironmentP env);
 }
 
 #include <details/scm-string.ipp>
@@ -136,6 +145,7 @@ const ::std::unordered_map<::std::string,
         {"print", lispPrint},
         {"print-ln", lispPrintLn},
         {"debug-get-function-env", debugGetFunctionEnv},
+        {"exec", execSequence},
 };
 
 const ::std::unordered_map<::std::string, ::std::function<ValueP(ValueP, ValueP, EnvironmentP)>> BinaryOps {
