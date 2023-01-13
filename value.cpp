@@ -1,9 +1,11 @@
+#include <iostream>
 #include <value.hpp>
 #include <exception>
 #include <eval.hpp>
 #include <string>
 #include <sstream>
 #include <exception.hpp>
+#include <cmath>
 
 namespace emehcs {
 
@@ -103,9 +105,16 @@ namespace emehcs {
         case LispValType::DottedList:
             ss << show(value.get<lv::DottedList>(), should_prompt_type);
             break;
-        case LispValType::Number:
-            ss << value.get<lv::Number>();
+        case LispValType::Number: {
+            lv::Number intpart, ori_number = value.get<lv::Number>();
+            if (::std::modf(ori_number, &intpart) == 0.0) {
+                ::std::int64_t i { static_cast<int>(ori_number) };
+                ss << i;
+            } else {
+                ss << ori_number;
+            }
             break;
+        }
         case LispValType::Char:
             ss << "#\\" << value.get<lv::Char>();
             break;
